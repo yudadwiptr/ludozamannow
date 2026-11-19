@@ -477,7 +477,7 @@ dom.tiltBtn.addEventListener('click', () => {
 // Lobby: Tabs, Roster Theme, Mode & Local Seats
 // ----------------------------------------------------------------------------
 
-const ID_FLAG = `<svg class="flag-svg" viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="8" rx="2" fill="#ff2a5f"/><rect y="8" width="24" height="8" rx="2" fill="#f8fafc"/></svg>`;
+const ID_FLAG = `<svg class="flag-svg" viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="8" rx="2" fill="#f1556f"/><rect y="8" width="24" height="8" rx="2" fill="#f8fafc"/></svg>`;
 
 const ROSTERS = [
   { id: 'nusantara', title: 'NUSANTARA CYBERPUNK', badge: () => ID_FLAG, tag: 'Legenda Nusantara versi neon' },

@@ -35,12 +35,12 @@ export class FXManager {
     };
   }
 
-  burstAtGrid(row, col, color = '#00f0ff', count = 28, speed = 4.2) {
+  burstAtGrid(row, col, color = '#38c6e0', count = 28, speed = 4.2) {
     const { x, y } = this.gridToPx(row, col);
     this.burst(x, y, color, count, speed);
   }
 
-  burst(x, y, color = '#00f0ff', count = 26, speed = 4) {
+  burst(x, y, color = '#38c6e0', count = 26, speed = 4) {
     for (let i = 0; i < count; i++) {
       const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.45;
       const spd = speed * (0.45 + Math.random() * 0.9);
@@ -59,7 +59,7 @@ export class FXManager {
     this._startLoop();
   }
 
-  ringAtGrid(row, col, color = '#ffd60a', maxRadius = 56) {
+  ringAtGrid(row, col, color = '#ecc94b', maxRadius = 56) {
     const { x, y } = this.gridToPx(row, col);
     this.particles.push({
       type: 'ring',
@@ -208,7 +208,7 @@ export class FXManager {
           // Fiery tail
           const grad = ctx.createLinearGradient(cx, cy, ef.startX, ef.startY);
           grad.addColorStop(0, '#ffffff');
-          grad.addColorStop(0.25, '#ffb703');
+          grad.addColorStop(0.25, '#f2b544');
           grad.addColorStop(0.6, ef.color);
           grad.addColorStop(1, 'transparent');
           ctx.strokeStyle = grad;
@@ -228,12 +228,12 @@ export class FXManager {
         } else {
           if (!ef.impacted) {
             ef.impacted = true;
-            this.burst(ef.x, ef.y, '#ffb703', 28, 6.2);
+            this.burst(ef.x, ef.y, '#f2b544', 28, 6.2);
             this.burst(ef.x, ef.y, ef.color, 34, 5.2);
           }
           const blast = (p - 0.42) / 0.58;
           ctx.globalAlpha = 1 - blast;
-          ctx.strokeStyle = '#ffb703';
+          ctx.strokeStyle = '#f2b544';
           ctx.lineWidth = 6 * (1 - blast);
           ctx.beginPath();
           ctx.arc(ef.x, ef.y, 14 + blast * 74, 0, Math.PI * 2);

@@ -17,25 +17,25 @@ export const MAPS = {
     tileStroke: '#382a54',
     starBg: '#231938',
     starStroke: '#c99738',
-    starColor: '#ffb703',
+    starColor: '#f2b544',
     yardBg: '#150f24',
     coreGlow: '#3c2161',
-    ringColor: '#ffb703',
-    ambient: 'rgba(255, 183, 3, 0.16)',
-    swatch: ['#1a132b', '#ffb703', '#c77dff'],
+    ringColor: '#f2b544',
+    ambient: 'rgba(242, 181, 68, 0.16)',
+    swatch: ['#1a132b', '#f2b544', '#b08cf0'],
     pattern: `<pattern id="mapPattern" width="84" height="84" patternUnits="userSpaceOnUse">
-      <circle cx="42" cy="42" r="25" fill="none" stroke="#ffb703" stroke-width="1.3" opacity="0.16"/>
-      <circle cx="0" cy="0" r="25" fill="none" stroke="#ffb703" stroke-width="1.3" opacity="0.16"/>
-      <circle cx="84" cy="0" r="25" fill="none" stroke="#ffb703" stroke-width="1.3" opacity="0.16"/>
-      <circle cx="0" cy="84" r="25" fill="none" stroke="#ffb703" stroke-width="1.3" opacity="0.16"/>
-      <circle cx="84" cy="84" r="25" fill="none" stroke="#ffb703" stroke-width="1.3" opacity="0.16"/>
-      <polygon points="42,27 57,42 42,57 27,42" fill="none" stroke="#00f5d4" stroke-width="1.1" opacity="0.14"/>
+      <circle cx="42" cy="42" r="25" fill="none" stroke="#f2b544" stroke-width="1.3" opacity="0.16"/>
+      <circle cx="0" cy="0" r="25" fill="none" stroke="#f2b544" stroke-width="1.3" opacity="0.16"/>
+      <circle cx="84" cy="0" r="25" fill="none" stroke="#f2b544" stroke-width="1.3" opacity="0.16"/>
+      <circle cx="0" cy="84" r="25" fill="none" stroke="#f2b544" stroke-width="1.3" opacity="0.16"/>
+      <circle cx="84" cy="84" r="25" fill="none" stroke="#f2b544" stroke-width="1.3" opacity="0.16"/>
+      <polygon points="42,27 57,42 42,57 27,42" fill="none" stroke="#2dd4bf" stroke-width="1.1" opacity="0.14"/>
     </pattern>`,
     yardPattern: true,
     // Gunungan (wayang tree-of-life silhouette)
-    emblem: `<path d="M50 8 C66 26 82 44 82 64 C82 82 66 92 50 92 C34 92 18 82 18 64 C18 44 34 26 50 8Z" fill="#1a0f2b" stroke="#ffb703" stroke-width="3.5"/>
-      <path d="M50 22 V84 M50 40 L36 52 M50 40 L64 52 M50 56 L32 70 M50 56 L68 70" stroke="#ffb703" stroke-width="3" stroke-linecap="round" fill="none"/>
-      <circle cx="50" cy="30" r="5" fill="#ff2a5f"/>`,
+    emblem: `<path d="M50 8 C66 26 82 44 82 64 C82 82 66 92 50 92 C34 92 18 82 18 64 C18 44 34 26 50 8Z" fill="#1a0f2b" stroke="#f2b544" stroke-width="3.5"/>
+      <path d="M50 22 V84 M50 40 L36 52 M50 40 L64 52 M50 56 L32 70 M50 56 L68 70" stroke="#f2b544" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <circle cx="50" cy="30" r="5" fill="#f1556f"/>`,
   },
 
   grid: {
@@ -50,18 +50,18 @@ export const MAPS = {
     starColor: '#cbd5e1',
     yardBg: '#0f162b',
     coreGlow: '#253559',
-    ringColor: '#00f0ff',
-    ambient: 'rgba(192, 97, 255, 0.16)',
-    swatch: ['#131b32', '#00f0ff', '#ff2e63'],
+    ringColor: '#38c6e0',
+    ambient: 'rgba(180, 138, 240, 0.16)',
+    swatch: ['#131b32', '#38c6e0', '#ef5b7a'],
     pattern: `<pattern id="mapPattern" width="75" height="75" patternUnits="userSpaceOnUse">
       <path d="M 75 0 L 0 0 0 75" fill="none" stroke="#38bdf8" stroke-width="1" opacity="0.09"/>
-      <circle cx="0" cy="0" r="2.2" fill="#00f0ff" opacity="0.22"/>
+      <circle cx="0" cy="0" r="2.2" fill="#38c6e0" opacity="0.22"/>
     </pattern>`,
     yardPattern: false,
     // Crown core
-    emblem: `<circle cx="50" cy="50" r="40" fill="#0b1328" stroke="#00f0ff" stroke-width="3.5"/>
-      <path d="M26 62 L30 36 L41 48 L50 30 L59 48 L70 36 L74 62 Z" fill="none" stroke="#ffd60a" stroke-width="4" stroke-linejoin="round"/>
-      <path d="M28 70 H72" stroke="#ffd60a" stroke-width="4" stroke-linecap="round"/>`,
+    emblem: `<circle cx="50" cy="50" r="40" fill="#0b1328" stroke="#38c6e0" stroke-width="3.5"/>
+      <path d="M26 62 L30 36 L41 48 L50 30 L59 48 L70 36 L74 62 Z" fill="none" stroke="#ecc94b" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M28 70 H72" stroke="#ecc94b" stroke-width="4" stroke-linecap="round"/>`,
   },
 
   candi: {

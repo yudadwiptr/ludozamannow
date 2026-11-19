@@ -82,20 +82,20 @@ export const THEMES = {
         name: 'GARUDA-01',
         title: 'Cyber Rajawali',
         emoji: '🦅',
-        color: '#00f5d4',
-        colorDark: '#064e4b',
-        glow: 'rgba(0, 245, 212, 0.55)',
+        color: '#2dd4bf',
+        colorDark: '#123f3b',
+        glow: 'rgba(45, 212, 191, 0.3)',
         startIdx: 0,
         skillName: 'Tukar Bayangan',
         skillDesc: 'Tukar posisi 1 pionmu dengan pion lawan di jalur utama!',
         koType: 'glitch_beam',
         koText: 'GARUDA LASER KO!',
         svgAvatar: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M8 22 L24 14 L32 8 L40 14 L56 22 L46 34 L32 54 L18 34 Z" fill="#092629" stroke="#00f5d4" stroke-width="2.5"/>
-          <path d="M14 24 L28 28 L20 34 Z" fill="#00f5d4"/>
-          <path d="M50 24 L36 28 L44 34 Z" fill="#00f5d4"/>
-          <polygon points="32,26 26,38 32,46 38,38" fill="#ffb703" stroke="#00f5d4" stroke-width="1.5"/>
-          <path d="M22 14 L32 20 L42 14" stroke="#ffb703" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M8 22 L24 14 L32 8 L40 14 L56 22 L46 34 L32 54 L18 34 Z" fill="#092629" stroke="#2dd4bf" stroke-width="2.5"/>
+          <path d="M14 24 L28 28 L20 34 Z" fill="#2dd4bf"/>
+          <path d="M50 24 L36 28 L44 34 Z" fill="#2dd4bf"/>
+          <polygon points="32,26 26,38 32,46 38,38" fill="#f2b544" stroke="#2dd4bf" stroke-width="1.5"/>
+          <path d="M22 14 L32 20 L42 14" stroke="#f2b544" stroke-width="2.5" stroke-linecap="round"/>
         </svg>`,
       },
       {
@@ -104,18 +104,18 @@ export const THEMES = {
         name: 'BARONG-X',
         title: 'Mecha Penjaga',
         emoji: '👹',
-        color: '#ff2a5f',
-        colorDark: '#690d28',
-        glow: 'rgba(255, 42, 95, 0.55)',
+        color: '#f1556f',
+        colorDark: '#55202d',
+        glow: 'rgba(241, 85, 111, 0.3)',
         startIdx: 13,
         skillName: 'Perisai Barong',
         skillDesc: 'Pasang perisai 2 ronde pada pion: lawan yang menabrak terpental mundur 3 langkah!',
         koType: 'meteor',
         koText: 'METEOR BARONG KO!',
         svgAvatar: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 20 L20 10 L32 14 L44 10 L52 20 L50 48 L32 56 L14 48 Z" fill="#2c0b16" stroke="#ff2a5f" stroke-width="2.5"/>
-          <circle cx="23" cy="29" r="5" fill="#ffb703"/>
-          <circle cx="41" cy="29" r="5" fill="#ffb703"/>
+          <path d="M12 20 L20 10 L32 14 L44 10 L52 20 L50 48 L32 56 L14 48 Z" fill="#2c0b16" stroke="#f1556f" stroke-width="2.5"/>
+          <circle cx="23" cy="29" r="5" fill="#f2b544"/>
+          <circle cx="41" cy="29" r="5" fill="#f2b544"/>
           <circle cx="23" cy="29" r="2" fill="#1a050d"/>
           <circle cx="41" cy="29" r="2" fill="#1a050d"/>
           <path d="M20 42 L26 38 L32 43 L38 38 L44 42" stroke="#ff7a9c" stroke-width="3" stroke-linecap="round"/>
@@ -128,24 +128,24 @@ export const THEMES = {
         name: 'MACAN-V',
         title: 'Kilat Siliwangi',
         emoji: '🐯',
-        color: '#ffb703',
-        colorDark: '#6b4a00',
-        glow: 'rgba(255, 183, 3, 0.58)',
+        color: '#f2b544',
+        colorDark: '#57431a',
+        glow: 'rgba(242, 181, 68, 0.3)',
         startIdx: 26,
         skillName: 'Lompatan Kilat',
         skillDesc: 'Pecah hasil dadu ke 2 pion sekaligus (atau +3 Turbo jika cuma 1 pion aktif)!',
         koType: 'lightning',
         koText: 'PETIR KILAT KO!',
         svgAvatar: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="14,12 24,20 14,28" fill="#ffb703"/>
-          <polygon points="50,12 40,20 50,28" fill="#ffb703"/>
-          <rect x="14" y="18" width="36" height="34" rx="14" fill="#2a1d04" stroke="#ffb703" stroke-width="2.5"/>
-          <path d="M26 20 L32 27 L38 20" stroke="#ffb703" stroke-width="2.5"/>
+          <polygon points="14,12 24,20 14,28" fill="#f2b544"/>
+          <polygon points="50,12 40,20 50,28" fill="#f2b544"/>
+          <rect x="14" y="18" width="36" height="34" rx="14" fill="#2a1d04" stroke="#f2b544" stroke-width="2.5"/>
+          <path d="M26 20 L32 27 L38 20" stroke="#f2b544" stroke-width="2.5"/>
           <polygon points="21,31 29,33 23,37" fill="#fff3b0"/>
           <polygon points="43,31 35,33 41,37" fill="#fff3b0"/>
-          <path d="M26 43 L32 47 L38 43" stroke="#ffb703" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="15" y1="35" x2="21" y2="35" stroke="#ffb703" stroke-width="2"/>
-          <line x1="43" y1="35" x2="49" y2="35" stroke="#ffb703" stroke-width="2"/>
+          <path d="M26 43 L32 47 L38 43" stroke="#f2b544" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="15" y1="35" x2="21" y2="35" stroke="#f2b544" stroke-width="2"/>
+          <line x1="43" y1="35" x2="49" y2="35" stroke="#f2b544" stroke-width="2"/>
         </svg>`,
       },
       {
@@ -154,20 +154,20 @@ export const THEMES = {
         name: 'NAGA-99',
         title: 'Naga Neon Gaib',
         emoji: '🐉',
-        color: '#c77dff',
-        colorDark: '#4a1575',
-        glow: 'rgba(199, 125, 255, 0.55)',
+        color: '#b08cf0',
+        colorDark: '#3d2a5e',
+        glow: 'rgba(176, 140, 240, 0.3)',
         startIdx: 39,
         skillName: 'Langkah Gaib',
         skillDesc: 'Dapat +3 langkah ekstra & tembus perisai maupun slime lawan di giliran ini!',
         koType: 'blackhole',
         koText: 'BLACK HOLE NAGA KO!',
         svgAvatar: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 16 L22 24 L32 10 L42 24 L52 16 L46 46 L32 56 L18 46 Z" fill="#1e0b30" stroke="#c77dff" stroke-width="2.5"/>
-          <path d="M20 32 L28 36 L22 39 Z" fill="#00f5d4"/>
-          <path d="M44 32 L36 36 L42 39 Z" fill="#00f5d4"/>
+          <path d="M12 16 L22 24 L32 10 L42 24 L52 16 L46 46 L32 56 L18 46 Z" fill="#1e0b30" stroke="#b08cf0" stroke-width="2.5"/>
+          <path d="M20 32 L28 36 L22 39 Z" fill="#2dd4bf"/>
+          <path d="M44 32 L36 36 L42 39 Z" fill="#2dd4bf"/>
           <path d="M25 46 Q32 51 39 46" stroke="#e0aaff" stroke-width="2.5" stroke-linecap="round"/>
-          <circle cx="32" cy="24" r="3" fill="#ffb703"/>
+          <circle cx="32" cy="24" r="3" fill="#f2b544"/>
         </svg>`,
       },
     ],
@@ -200,22 +200,22 @@ export const THEMES = {
         name: 'KITSUNE',
         title: 'Cyber Glitcher',
         emoji: '🦊',
-        color: '#00f0ff',
-        colorDark: '#005e70',
-        glow: 'rgba(0, 240, 255, 0.55)',
+        color: '#38c6e0',
+        colorDark: '#164857',
+        glow: 'rgba(56, 198, 224, 0.3)',
         startIdx: 0,
         skillName: 'Swap Glitch',
         skillDesc: 'Tukar posisi 1 pionmu dengan pion lawan di jalur utama!',
         koType: 'glitch_beam',
         koText: 'CYBER GLITCH KO!',
         svgAvatar: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="10,10 24,26 12,34" fill="#00f0ff" opacity="0.9"/>
-          <polygon points="54,10 40,26 52,34" fill="#00f0ff" opacity="0.9"/>
-          <polygon points="14,22 50,22 44,48 32,56 20,48" fill="#0b1f2e" stroke="#00f0ff" stroke-width="2.5"/>
-          <polygon points="20,33 28,36 22,39" fill="#00f0ff"/>
-          <polygon points="44,33 36,36 42,39" fill="#00f0ff"/>
-          <path d="M27 45 L32 49 L37 45" stroke="#7df9ff" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="16" y1="28" x2="48" y2="28" stroke="#00f0ff" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.7"/>
+          <polygon points="10,10 24,26 12,34" fill="#38c6e0" opacity="0.9"/>
+          <polygon points="54,10 40,26 52,34" fill="#38c6e0" opacity="0.9"/>
+          <polygon points="14,22 50,22 44,48 32,56 20,48" fill="#0b1f2e" stroke="#38c6e0" stroke-width="2.5"/>
+          <polygon points="20,33 28,36 22,39" fill="#38c6e0"/>
+          <polygon points="44,33 36,36 42,39" fill="#38c6e0"/>
+          <path d="M27 45 L32 49 L37 45" stroke="#a5e4ee" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="16" y1="28" x2="48" y2="28" stroke="#38c6e0" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.7"/>
         </svg>`,
       },
       {
@@ -224,22 +224,22 @@ export const THEMES = {
         name: 'TITAN-X',
         title: 'Lava Brawler',
         emoji: '🦍',
-        color: '#ff2e63',
-        colorDark: '#6b0c27',
-        glow: 'rgba(255, 46, 99, 0.55)',
+        color: '#ef5b7a',
+        colorDark: '#56222f',
+        glow: 'rgba(239, 91, 122, 0.3)',
         startIdx: 13,
         skillName: 'Iron Shield',
         skillDesc: 'Pasang perisai 2 ronde pada pion: lawan yang menabrak terpental mundur 3 langkah!',
         koType: 'meteor',
         koText: 'METEOR SMASH KO!',
         svgAvatar: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="12" y="14" width="40" height="38" rx="10" fill="#290b16" stroke="#ff2e63" stroke-width="2.5"/>
-          <path d="M18 26 L46 26 L42 36 L22 36 Z" fill="#ff2e63"/>
+          <rect x="12" y="14" width="40" height="38" rx="10" fill="#290b16" stroke="#ef5b7a" stroke-width="2.5"/>
+          <path d="M18 26 L46 26 L42 36 L22 36 Z" fill="#ef5b7a"/>
           <rect x="24" y="29" width="6" height="4" rx="1" fill="#fff"/>
           <rect x="34" y="29" width="6" height="4" rx="1" fill="#fff"/>
           <path d="M22 44 H42" stroke="#ff7a9c" stroke-width="3" stroke-linecap="round"/>
-          <path d="M14 20 L8 28 L14 34" stroke="#ff2e63" stroke-width="2.5"/>
-          <path d="M50 20 L56 28 L50 34" stroke="#ff2e63" stroke-width="2.5"/>
+          <path d="M14 20 L8 28 L14 34" stroke="#ef5b7a" stroke-width="2.5"/>
+          <path d="M50 20 L56 28 L50 34" stroke="#ef5b7a" stroke-width="2.5"/>
         </svg>`,
       },
       {
@@ -248,20 +248,20 @@ export const THEMES = {
         name: 'SPARKY',
         title: 'Turbo Courier',
         emoji: '⚡',
-        color: '#ffd60a',
-        colorDark: '#705800',
-        glow: 'rgba(255, 214, 10, 0.55)',
+        color: '#ecc94b',
+        colorDark: '#584a1c',
+        glow: 'rgba(236, 201, 75, 0.3)',
         startIdx: 26,
         skillName: 'Split Step',
         skillDesc: 'Pecah hasil dadu ke 2 pion sekaligus (atau +3 Turbo jika cuma 1 pion aktif)!',
         koType: 'lightning',
         koText: 'THUNDERBOLT KO!',
         svgAvatar: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="32" cy="34" r="20" fill="#261e04" stroke="#ffd60a" stroke-width="2.5"/>
-          <polygon points="34,6 22,28 32,28 28,44 44,22 34,22" fill="#ffd60a"/>
+          <circle cx="32" cy="34" r="20" fill="#261e04" stroke="#ecc94b" stroke-width="2.5"/>
+          <polygon points="34,6 22,28 32,28 28,44 44,22 34,22" fill="#ecc94b"/>
           <circle cx="24" cy="37" r="3" fill="#fff7cc"/>
           <circle cx="40" cy="37" r="3" fill="#fff7cc"/>
-          <path d="M25 46 Q32 51 39 46" stroke="#ffd60a" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M25 46 Q32 51 39 46" stroke="#ecc94b" stroke-width="2.5" stroke-linecap="round"/>
         </svg>`,
       },
       {
@@ -270,16 +270,16 @@ export const THEMES = {
         name: 'PHANTOM',
         title: 'Neon Wraith',
         emoji: '👻',
-        color: '#c061ff',
-        colorDark: '#4d1478',
-        glow: 'rgba(192, 97, 255, 0.55)',
+        color: '#b48af0',
+        colorDark: '#402c62',
+        glow: 'rgba(180, 138, 240, 0.3)',
         startIdx: 39,
         skillName: 'Phase Dash',
         skillDesc: 'Dapat +3 langkah ekstra & tembus perisai maupun slime lawan di giliran ini!',
         koType: 'blackhole',
         koText: 'BLACK HOLE KO!',
         svgAvatar: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M16 32 C16 16 48 16 48 32 V52 L41 46 L35 52 L29 46 L23 52 L16 46 Z" fill="#1d0b2e" stroke="#c061ff" stroke-width="2.5"/>
+          <path d="M16 32 C16 16 48 16 48 32 V52 L41 46 L35 52 L29 46 L23 52 L16 46 Z" fill="#1d0b2e" stroke="#b48af0" stroke-width="2.5"/>
           <ellipse cx="25" cy="31" rx="4" ry="5" fill="#e0aaff"/>
           <ellipse cx="39" cy="31" rx="4" ry="5" fill="#e0aaff"/>
           <circle cx="26" cy="31" r="1.5" fill="#1d0b2e"/>
@@ -365,21 +365,21 @@ export const BOARD_EVENTS = [
     id: 'portal',
     name: 'PORTAL SHIFT',
     icon: 'portal',
-    color: '#00f5d4',
+    color: '#2dd4bf',
     desc: 'Dua wormhole aktif di papan! Mendarat di portal langsung teleport ke seberang.',
   },
   {
     id: 'turbo',
     name: 'TURBO LANE',
     icon: 'bolt',
-    color: '#ffb703',
+    color: '#f2b544',
     desc: 'Petak emas menyala! Mendarat di Turbo Tile dapat +2 langkah instan.',
   },
   {
     id: 'blackout',
     name: 'BLACKOUT MODE',
     icon: 'moon',
-    color: '#ff2a5f',
+    color: '#f1556f',
     desc: 'Semua Safe Zone NONAKTIF sementara! Tidak ada tempat aman!',
   },
   {

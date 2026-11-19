@@ -47,9 +47,9 @@ export function logoWordmark(o = {}) {
   const id = `lz${++uid}`;
   const gradient = o.gradient
     ? `<linearGradient id="${id}g" x1="0" y1="0" x2="1" y2="0">
-         <stop offset="0%" stop-color="#00f5d4"/>
+         <stop offset="0%" stop-color="#2dd4bf"/>
          <stop offset="45%" stop-color="#ffffff"/>
-         <stop offset="100%" stop-color="#ffb703"/>
+         <stop offset="100%" stop-color="#f2b544"/>
        </linearGradient>`
     : '';
   const fill = o.gradient ? `url(#${id}g)` : (o.fill || 'currentColor');

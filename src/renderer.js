@@ -21,7 +21,7 @@ import { getMap, loadCosmetics, renderPawnSkin, pipGridHTML } from './skins.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-export const ID_FLAG_SVG = `<svg class="flag-svg" viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="8" rx="2" fill="#ff2a5f"/><rect y="8" width="24" height="8" rx="2" fill="#f8fafc"/></svg>`;
+export const ID_FLAG_SVG = `<svg class="flag-svg" viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="8" rx="2" fill="#f1556f"/><rect y="8" width="24" height="8" rx="2" fill="#f8fafc"/></svg>`;
 
 const INSPECTOR_IDLE = `${icon('bulb')}<span>Arahkan kursor ke petak atau pion menyala untuk lihat info &amp; preview jalur.</span>`;
 
@@ -122,7 +122,7 @@ export class GameRenderer {
         <stop offset="100%" stop-color="${heroes[3].color}"/>
       </linearGradient>
       <filter id="neonSoft" x="-30%" y="-30%" width="160%" height="160%">
-        <feGaussianBlur stdDeviation="6" result="blur"/>
+        <feGaussianBlur stdDeviation="3" result="blur"/>
         <feMerge>
           <feMergeNode in="blur"/>
           <feMergeNode in="SourceGraphic"/>
@@ -137,7 +137,8 @@ export class GameRenderer {
       x: 4, y: 4, width: 1492, height: 1492, rx: 36,
       fill: map.boardBg,
       stroke: 'url(#cyberBorder)',
-      'stroke-width': 6,
+      'stroke-width': 4,
+      'stroke-opacity': 0.8,
     }));
 
     // Map motif overlay
@@ -216,7 +217,7 @@ export class GameRenderer {
       } else if (isStar) {
         tileGroup.appendChild(svgEl('circle', {
           cx: x + 50, cy: y + 50, r: 32,
-          fill: 'rgba(255, 183, 3, 0.06)',
+          fill: 'rgba(242, 181, 68, 0.06)',
           stroke: map.starStroke,
           'stroke-width': 1.5,
           'stroke-dasharray': '5 4',
@@ -305,7 +306,8 @@ export class GameRenderer {
         x: x + 16, y: y + 16, width: 568, height: 568, rx: 38,
         fill: map.yardBg,
         stroke: hero.color,
-        'stroke-width': 5,
+        'stroke-width': 3,
+        'stroke-opacity': 0.75,
         class: 'yard-frame',
       }));
 
@@ -565,7 +567,7 @@ export class GameRenderer {
     if (destProg === MAX_PROGRESS) {
       label = 'FINIS!';
       glyph = 'flag';
-      badgeColor = '#ffb703';
+      badgeColor = '#f2b544';
     } else if (destProg <= 50) {
       const gIdx = getGlobalTrackIndex(activePlayer.hero.startIdx, destProg);
       const isBlackout = state.activeEvent?.id === 'blackout';
@@ -589,19 +591,19 @@ export class GameRenderer {
         const blocked = hasShield && !state.phaseDashActive;
         label = blocked ? 'BLOCK!' : 'KO!';
         glyph = blocked ? 'shield' : 'burst';
-        badgeColor = blocked ? '#38bdf8' : '#ff2a5f';
+        badgeColor = blocked ? '#38bdf8' : '#f1556f';
       } else if (state.mysteryActive.has(gIdx)) {
         label = 'LOOT!';
         glyph = 'gift';
-        badgeColor = '#ffb703';
+        badgeColor = '#f2b544';
       } else if (state.activeEvent?.id === 'portal' && PORTAL_PAIR.includes(gIdx)) {
         label = 'WARP!';
         glyph = 'portal';
-        badgeColor = '#00f5d4';
+        badgeColor = '#2dd4bf';
       } else if (state.activeEvent?.id === 'turbo' && TURBO_TILES.includes(gIdx)) {
         label = '+2 TURBO';
         glyph = 'bolt';
-        badgeColor = '#ffb703';
+        badgeColor = '#f2b544';
       } else if (isSafe) {
         label = 'AMAN';
         glyph = 'star';
@@ -695,7 +697,7 @@ export class GameRenderer {
     // Blackout: safe-zone stars dim to red
     const isBlackout = state.activeEvent?.id === 'blackout';
     this.dom.boardSvg.querySelectorAll('.board-star-icon').forEach((el) => {
-      const col = isBlackout ? '#ff2a5f' : map.starColor;
+      const col = isBlackout ? '#f1556f' : map.starColor;
       el.setAttribute('stroke', col);
       el.setAttribute('fill', col);
       el.setAttribute('opacity', isBlackout ? '0.35' : '1');
@@ -731,13 +733,13 @@ export class GameRenderer {
     };
 
     if (state.activeEvent?.id === 'turbo') {
-      TURBO_TILES.forEach((idx) => tileOverlay(idx, 'TURBO LANE — mendarat di sini langsung melesat +2 langkah!', 'bolt', '#ffb703', 'rect'));
+      TURBO_TILES.forEach((idx) => tileOverlay(idx, 'TURBO LANE — mendarat di sini langsung melesat +2 langkah!', 'bolt', '#f2b544', 'rect'));
     }
     if (state.activeEvent?.id === 'portal') {
-      PORTAL_PAIR.forEach((idx) => tileOverlay(idx, 'PORTAL SHIFT — mendarat di wormhole ini langsung teleport ke seberang!', 'portal', '#00f5d4', 'circle'));
+      PORTAL_PAIR.forEach((idx) => tileOverlay(idx, 'PORTAL SHIFT — mendarat di wormhole ini langsung teleport ke seberang!', 'portal', '#2dd4bf', 'circle'));
     }
     state.mysteryActive.forEach((idx) => {
-      tileOverlay(idx, 'MYSTERY BOX — isi acak: Dadu Spesial, Reverse Uno, EMP Shock, atau +35 Energi.', 'gift', '#ffb703', 'dashed');
+      tileOverlay(idx, 'MYSTERY BOX — isi acak: Dadu Spesial, Reverse Uno, EMP Shock, atau +35 Energi.', 'gift', '#f2b544', 'dashed');
     });
     for (const idxStr of Object.keys(state.slimeTraps)) {
       tileOverlay(Number(idxStr), 'SLIME TRAP — lawan yang melintas lengket & berhenti di sini!', 'slime', '#4ade80', 'circle');
