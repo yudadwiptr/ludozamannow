@@ -1,0 +1,20 @@
+<svg viewBox="0 0 640 640" role="img" aria-label="LUDOZ" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="640" height="640" rx="140" fill="#3a8dd8"/>
+    <g transform="translate(110 35)">
+    <mask id="lzm1" maskUnits="userSpaceOnUse" x="-20" y="-20" width="480" height="620">
+      <rect x="-20" y="-20" width="480" height="620" fill="#fff"/>
+      <g fill="#000">
+  <ellipse cx="95" cy="92" rx="30" ry="16"/>
+  <ellipse cx="205" cy="70" rx="30" ry="16"/>
+  <ellipse cx="205" cy="112" rx="30" ry="16"/>
+  <ellipse cx="320" cy="118" rx="30" ry="16"/>
+  <ellipse cx="205" cy="160" rx="30" ry="16"/></g>
+    </mask>
+    <g fill="#ffffff" mask="url(#lzm1)">
+  <path d="M5 82 Q2 74 10 70 L222 6 Q232 3 240 9 L404 128 Q414 136 408 146 L180 472 H330 V560 H30 V496 L262 196 L210 214 Q200 217 192 211 Z"/></g>
+    <g fill="#ffffff">
+  <ellipse cx="38" cy="228" rx="12" ry="19" transform="rotate(25 38 228)"/>
+  <ellipse cx="86" cy="200" rx="12" ry="19" transform="rotate(25 86 200)"/>
+  <ellipse cx="134" cy="166" rx="12" ry="19" transform="rotate(25 134 166)"/>
+  <ellipse cx="340" cy="332" rx="11" ry="17" transform="rotate(25 340 332)"/></g></g>
+  </svg>

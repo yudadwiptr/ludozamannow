@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1920"><rect width="1920" height="1920" fill="#3a8dd8"/><svg x="230" y="670" width="1482" height="580" viewBox="-6 -6 1482 580">
+    <defs></defs>
+    <g fill="#ffffff">
+  <path d="M0 72 H100 V470 H208 V555 H0 Z"/>
+  <path d="M288 72 H368 V440 Q368 472 383 472 Q398 472 398 440 V72 H478 V455 Q478 562 383 562 Q288 562 288 455 Z"/>
+  <path fill-rule="evenodd" d="M538 72 H655 Q753 72 753 172 V455 Q753 555 655 555 H538 Z M618 152 V475 H640 Q668 475 668 445 V182 Q668 152 640 152 Z"/>
+  <path fill-rule="evenodd" d="M923 62 Q1033 62 1033 178 V449 Q1033 565 923 565 Q813 565 813 449 V178 Q813 62 923 62 Z M923 150 Q898 150 898 180 V447 Q898 477 923 477 Q948 477 948 447 V180 Q948 150 923 150 Z"/></g>
+    <g transform="translate(1058 -8)">
+    <mask id="lz2m" maskUnits="userSpaceOnUse" x="-20" y="-20" width="480" height="620">
+      <rect x="-20" y="-20" width="480" height="620" fill="#fff"/>
+      <g fill="#000">
+  <ellipse cx="95" cy="92" rx="30" ry="16"/>
+  <ellipse cx="205" cy="70" rx="30" ry="16"/>
+  <ellipse cx="205" cy="112" rx="30" ry="16"/>
+  <ellipse cx="320" cy="118" rx="30" ry="16"/>
+  <ellipse cx="205" cy="160" rx="30" ry="16"/></g>
+    </mask>
+    <g fill="#ffffff" mask="url(#lz2m)">
+  <path d="M5 82 Q2 74 10 70 L222 6 Q232 3 240 9 L404 128 Q414 136 408 146 L180 472 H330 V560 H30 V496 L262 196 L210 214 Q200 217 192 211 Z"/></g>
+    <g fill="#ffffff">
+  <ellipse cx="38" cy="228" rx="12" ry="19" transform="rotate(25 38 228)"/>
+  <ellipse cx="86" cy="200" rx="12" ry="19" transform="rotate(25 86 200)"/>
+  <ellipse cx="134" cy="166" rx="12" ry="19" transform="rotate(25 134 166)"/>
+  <ellipse cx="340" cy="332" rx="11" ry="17" transform="rotate(25 340 332)"/></g></g>
+  </svg></svg>

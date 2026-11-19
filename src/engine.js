@@ -18,6 +18,7 @@ import {
   SPECIAL_DICE_POOL,
   BOARD_EVENTS,
 } from './constants.js';
+import { stripEmoji } from './icons.js';
 import { sfx } from './sound.js';
 
 const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -197,7 +198,7 @@ export class GameEngine {
   }
 
   _log(text, color = '#cbd5e1') {
-    if (this.onLog) this.onLog(text, color);
+    if (this.onLog) this.onLog(stripEmoji(text), color);
   }
 
   _render() {
@@ -489,7 +490,7 @@ export class GameEngine {
     }
 
     const faceLabel = finalFace === -2 ? '💀 (-2)' : `${finalFace}`;
-    this._log(`${player.hero.emoji} ${player.hero.name} melempar ${diceDef.icon} ${diceDef.name} → ${faceLabel}`, player.hero.color);
+    this._log(`${player.hero.emoji} ${player.hero.name} melempar Dadu ${diceDef.name} → ${faceLabel}`, player.hero.color);
 
     // Sparky / Macan-V Split Step
     if (this.state.sparkySplitArmed && effectiveSteps >= 2) {
@@ -823,7 +824,7 @@ export class GameEngine {
       const excludeId = pawn.id;
       const valid = this._getValidPawnsForSteps(player, fu.steps, fu.rawFace, excludeId);
       if (valid.length > 0) {
-        const label = fu.type === 'mirror' ? '🪞 DADU KEMBAR' : `${player.hero.emoji} ${player.hero.skillName.toUpperCase()}`;
+        const label = fu.type === 'mirror' ? 'DADU GENAP' : `${player.hero.emoji} ${player.hero.skillName.toUpperCase()}`;
         this._log(`${label}: Pilih pion kedua untuk maju ${fu.steps} langkah!`, player.hero.color);
         await this._enterPawnSelection(player, fu.steps, 'normal', fu.rawFace, excludeId);
         return;
@@ -847,8 +848,8 @@ export class GameEngine {
         player.diceInventory[0] = newDice;
       }
       const dDef = DICE_TYPES[newDice];
-      this.fx?.floatingTextAtGrid(r, c, `🎁 ${dDef.icon} ${dDef.name}!`, dDef.color, true);
-      this._log(`🎁 Mystery Box: ${player.hero.name} dapat Dadu ${dDef.icon} ${dDef.name}!`, dDef.color);
+      this.fx?.floatingTextAtGrid(r, c, `+ DADU ${dDef.name.toUpperCase()}!`, dDef.color, true);
+      this._log(`🎁 Mystery Box: ${player.hero.name} dapat Dadu ${dDef.name}!`, dDef.color);
     } else if (roll < 0.68) {
       this.state.direction *= -1;
       sfx.reverse();
@@ -1036,7 +1037,7 @@ export class GameEngine {
         this.state.activeEvent = { ...ev, roundsLeft: 2 };
         sfx.skillActivate();
         this.fx?.shake('light');
-        this._log(`🚨 BOARD EVENT: ${ev.icon} ${ev.name} — ${ev.desc}`, ev.color);
+        this._log(`BOARD EVENT: ${ev.name} — ${ev.desc}`, ev.color);
       }
     }
   }
@@ -1163,10 +1164,11 @@ export class GameEngine {
     if (p.diceInventory.length === 0) return 'normal';
     const allInBase = p.pawns.every((pw) => pw.finished || pw.progress === -1);
     if (allInBase) {
-      // Never waste Sniper (1-3) when needing a 6! Chaos/Normal/Magnet have 6!
+      // Never waste the odd die (1/3/5) when needing a 6! Chaos/Normal/Magnet have 6!
       return 'normal';
     }
-    if (p.diceInventory.includes('sniper') && p.pawns.some((pw) => !pw.finished && pw.progress >= 53 && pw.progress <= 55)) {
+    // Odd die (id 'sniper'): use it when a pawn needs exactly 1, 3 or 5 to finish
+    if (p.diceInventory.includes('sniper') && p.pawns.some((pw) => !pw.finished && pw.progress >= 51 && (56 - pw.progress) % 2 === 1)) {
       return 'sniper';
     }
     const activeCount = p.pawns.filter((pw) => !pw.finished && pw.progress >= 0 && pw.progress <= 50).length;

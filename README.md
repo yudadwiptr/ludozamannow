@@ -13,8 +13,11 @@ Game web Ludo modern dengan **Hero Skill Overdrive**, **Tactical Dice Loadout**,
   - `Meteor Impact` (Barong-X / Titan-X)
   - `Petir Kilat` (Macan-V / Sparky)
   - `Black Hole Implosion` (Naga-99 / Phantom)
-- **🎒 Tactical Dice & Power-Hold Roll:** Dadu Standar, Sniper (`1–3`), Chaos (`0–8 / 💀-2`), Magnet (`±1 KO`), Kembar (`2x Pion`), & Slime Trap.
+- **🎒 Tactical Dice & Power-Hold Roll:** Dadu Standar, Ganjil (`1/3/5`), Chaos (`0–8 / 💀-2`), Magnet (`±1 KO`), Genap (`2/4/6` + 2 pion), & Slime Trap.
 - **🚨 Dynamic Board Events & Mystery Box:** Portal Shift, Turbo Lane, Blackout Mode, Energy Surge, Reverse Uno, & EMP Shock.
+- **🎨 Arena & Skin (tab baru di Lobby):** 4 peta (Batik Kawung, Cyber Grid, Candi Senja, Samudra Abyss), 4 skin pion (Orb Hero, Bidak Klasik, Kristal Prisma, Chip Arcade), 5 skin dadu (Neon Core, Gading Klasik, Hologram, Emas 24K, Batik Sogan). Tersimpan di browser & bersifat lokal.
+- **⏳ Loading Screen:** splash saat buka game + layar "masuk arena" sebelum match (dadu 3D berputar, pion mengorbit, lineup hero VS, progress & tips).
+- **✏️ Ikon SVG penuh:** semua UI memakai ikon SVG (`src/icons.js`) — tidak ada emoji di dalam game. Logo & favicon ada di `assets/` (vektor, dibuat dari `src/logo.js`).
 - **🌐 Multiplayer Online Real-Time:** Buat/Gabung Room 4 huruf + Link Invite (`/?room=XXXX`) via built-in SSE + REST server di `server.mjs`.
 
 ## 🚀 Cara Menjalankan

@@ -1,3 +1,5 @@
+import { icon, stripEmoji } from './icons.js';
+
 // ============================================================================
 // LUDO OVERDRIVE — Visual FX: Particles, Signature KO Finishers & Shake
 // ============================================================================
@@ -149,17 +151,17 @@ export class FXManager {
   showKOBanner(text, color, koType) {
     if (!this.stage) return;
     const icons = {
-      meteor: '☄️',
-      lightning: '⚡',
-      blackhole: '🌀',
-      glitch_beam: '💠',
+      meteor: 'flame',
+      lightning: 'bolt',
+      blackhole: 'portal',
+      glitch_beam: 'gem',
     };
     const old = this.stage.querySelector('.ko-splash-banner');
     if (old) old.remove();
     const el = document.createElement('div');
     el.className = 'ko-splash-banner';
     el.style.setProperty('--ko-color', color);
-    el.innerHTML = `<span class="ko-splash-icon">${icons[koType] || '💥'}</span><span>${text}</span>`;
+    el.innerHTML = `<span class="ko-splash-icon">${icon(icons[koType] || 'burst', { stroke: 2.4 })}</span><span>${stripEmoji(text)}</span>`;
     this.stage.appendChild(el);
     setTimeout(() => el.remove(), 1150);
   }
@@ -168,7 +170,7 @@ export class FXManager {
     if (!this.stage) return;
     const el = document.createElement('div');
     el.className = `fx-float-text ${big ? 'fx-big' : ''}`;
-    el.textContent = text;
+    el.textContent = stripEmoji(text);
     el.style.left = `${((col + 0.5) / 15) * 100}%`;
     el.style.top = `${((row + 0.5) / 15) * 100}%`;
     el.style.color = color;

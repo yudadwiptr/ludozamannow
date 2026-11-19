@@ -4,195 +4,206 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LudoZ - Ludo Zaman Now</title>
+  <meta name="description" content="LudoZ — Ludo taktis bertema Nusantara Cyberpunk: hero skill, dadu spesial, efek KO & multiplayer online." />
+  <meta name="theme-color" content="#0b0714" />
+  <meta property="og:image" content="./assets/logo.svg" />
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+  <link rel="apple-touch-icon" href="./assets/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./src/styles.css" />
 </head>
 <body data-theme="nusantara">
+  <!-- Loading Screen (boot + pre-match) -->
+  <div id="loading-screen" class="loading-screen show" data-kind="boot" role="status" aria-live="polite">
+    <div class="ld-glow"></div>
+    <div class="ld-center">
+      <div id="ld-brand" class="ld-brand" aria-label="LUDOZ"></div>
+      <div id="ld-sub" class="ld-sub">LUDO ZAMAN NOW</div>
+      <div id="ld-stage" class="ld-stage"></div>
+      <div id="ld-lineup" class="ld-lineup"></div>
+      <div class="ld-progress-wrap">
+        <div class="ld-progress"><div id="ld-bar" class="ld-bar"></div></div>
+        <div class="ld-progress-meta">
+          <span id="ld-step" class="ld-step">Memuat aset arena</span>
+          <span id="ld-pct" class="ld-pct">0%</span>
+        </div>
+      </div>
+      <div id="ld-tip" class="ld-tip"></div>
+    </div>
+  </div>
+
   <div class="app-shell">
     <!-- Top Bar -->
     <header class="top-bar">
       <div class="brand-wrap">
-        <span id="brand-logo" class="brand-logo">LUDOZ</span>
+        <span id="brand-logo" class="brand-logo" aria-label="LUDOZ"></span>
         <span id="brand-pill" class="brand-pill">LUDO ZAMAN NOW</span>
       </div>
 
-      <div id="event-banner" class="event-banner idle">
-        <span class="ev-icon">🛰️</span>
-        <span class="ev-title">BOARD NORMAL</span>
-        <span class="ev-desc">Wajib dadu 6 keluar markas • Event acak segera aktif</span>
-      </div>
+      <div id="event-banner" class="event-banner idle"></div>
 
       <div class="top-actions">
-        <span id="room-badge" class="meta-badge room-pill" style="display:none;">🌐 ROOM</span>
-        <span id="round-badge" class="meta-badge">RONDE 1</span>
-        <span id="dir-badge" class="meta-badge">↻ SEARAH</span>
-        <button id="theme-btn" type="button" class="icon-btn theme-btn" title="Ganti Tema Visual">
-          <svg class="flag-svg" viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="8" rx="2" fill="#ff2a5f"/><rect y="8" width="24" height="8" rx="2" fill="#f8fafc"/></svg>
-          <span>Nusantara</span>
-        </button>
-        <button id="sound-btn" type="button" class="icon-btn" title="Suara Aktif">🔊</button>
-        <button id="help-btn" type="button" class="icon-btn" title="Panduan Main">❓</button>
-        <button id="lobby-btn" type="button" class="icon-btn" title="Pengaturan & Multiplayer">⚙️ Lobby</button>
+        <span id="room-badge" class="meta-badge room-pill" style="display:none;"></span>
+        <span id="round-badge" class="meta-badge"></span>
+        <span id="dir-badge" class="meta-badge"></span>
+        <button id="theme-btn" type="button" class="icon-btn theme-btn" title="Ganti roster hero"></button>
+        <button id="sound-btn" type="button" class="icon-btn icon-only" title="Suara aktif" aria-label="Suara" data-icon="volume"></button>
+        <button id="help-btn" type="button" class="icon-btn icon-only" title="Panduan main" aria-label="Panduan" data-icon="help"></button>
+        <button id="lobby-btn" type="button" class="icon-btn" title="Lobby, skin & multiplayer" data-icon="settings"><span>Lobby</span></button>
       </div>
     </header>
 
     <!-- Main 3-Column Arena -->
     <main class="arena-grid">
-      <!-- Left Column: Hero 0 & Hero 3 HUD + Battle Feed + Emotes -->
+      <!-- Left: Hero 0 & 3 + Battle Feed + Emotes -->
       <section class="side-col left-col">
         <div id="left-cards" class="cards-stack"></div>
 
         <div class="log-panel">
-          <div class="panel-mini-title">📡 BATTLE FEED</div>
+          <div class="panel-mini-title" data-icon="feed"><span>BATTLE FEED</span></div>
           <div id="battle-log" class="battle-log"></div>
         </div>
 
         <div class="emote-panel">
-          <div class="panel-mini-title">💬 BANTER / EMOTE</div>
+          <div class="panel-mini-title" data-icon="chat"><span>EMOTE</span></div>
           <div id="emote-bar" class="emote-bar"></div>
         </div>
       </section>
 
-      <!-- Center Column: Interactive 15x15 Board + Map HUD -->
+      <!-- Center: Board -->
       <section class="board-col">
         <div class="board-perspective-wrap">
           <div id="board-stage" class="board-stage">
-            <svg id="board-svg" aria-label="Papan LudoZ - Ludo Zaman Now"></svg>
+            <svg id="board-svg" aria-label="Papan LudoZ"></svg>
             <div id="pawns-layer" class="pawns-layer"></div>
             <canvas id="fx-canvas" class="fx-canvas"></canvas>
           </div>
         </div>
 
-        <!-- Interactive Map Bottom Strip -->
         <div class="map-hud-strip">
-          <div id="tile-inspector" class="tile-inspector">
-            💡 Arahkan kursor ke petak peta atau pion menyala untuk preview jalur &amp; info!
-          </div>
-          <button id="tilt-btn" type="button" class="tilt-toggle-btn" title="Ubah sudut pandang papan 2.5D / 2D">
-            🧊 2.5D
-          </button>
+          <div id="tile-inspector" class="tile-inspector"></div>
+          <button id="tilt-btn" type="button" class="tilt-toggle-btn" title="Ubah sudut pandang papan" data-icon="cube"><span>2.5D</span></button>
         </div>
       </section>
 
-      <!-- Right Column: Hero 1 & Hero 2 HUD + Tactical Dice Dock -->
+      <!-- Right: Hero 1 & 2 + Dice Dock -->
       <section class="side-col right-col">
         <div id="right-cards" class="cards-stack"></div>
 
         <div class="dock-panel">
           <div class="turn-header">
-            <div>
+            <div class="turn-header-main">
               <div class="turn-kicker">GILIRAN AKTIF</div>
-              <div id="turn-hero-name">🦅 GARUDA-01</div>
+              <div id="turn-hero-name"></div>
             </div>
-            <button id="cancel-skill-btn" type="button" class="cancel-skill-btn">✕ Batal</button>
+            <button id="cancel-skill-btn" type="button" class="cancel-skill-btn" data-icon="close"><span>Batal</span></button>
           </div>
           <div id="turn-prompt">Cari angka 6 untuk keluar dari markas!</div>
 
-          <!-- 3D Dice Display -->
           <div class="dice-stage-row">
-            <div id="dice-cube" class="dice-cube">
-              <span class="dice-big-icon">🎲</span>
-            </div>
-            <div id="dice-info-label" class="dice-info-label">
-              Dadu Standar 1–6 (Wajib 6 untuk keluar!)
-            </div>
+            <div id="dice-cube" class="die dice-cube" data-skin="neon"></div>
+            <div id="dice-info-label" class="dice-info-label"></div>
           </div>
 
-          <!-- Tactical Dice Loadout -->
-          <div>
-            <div class="panel-mini-title" style="margin-bottom:4px;">🎒 LOADOUT DADU</div>
+          <div class="loadout-block">
+            <div class="panel-mini-title" data-icon="backpack"><span>LOADOUT DADU</span></div>
             <div id="dice-loadout" class="dice-loadout"></div>
           </div>
 
-          <!-- Overdrive Quick Trigger -->
-          <button id="dock-skill-btn" type="button" class="dock-skill-btn">⚡ OVERDRIVE SKILL</button>
+          <button id="dock-skill-btn" type="button" class="dock-skill-btn"></button>
 
-          <!-- Power-Hold Roll Button -->
           <div class="roll-group">
             <button id="roll-btn" type="button" class="roll-btn">
               <span id="power-fill" class="power-fill"></span>
               <span class="roll-btn-inner">
-                <span id="roll-btn-text">🎲 LEMPAR DADU</span>
+                <span id="roll-btn-text" class="roll-btn-text">LEMPAR DADU</span>
               </span>
             </button>
-            <div class="roll-hint">Tahan tombol (atau SPACE) untuk Power Bar, atau klik cepat!</div>
+            <div class="roll-hint">Tahan tombol / <kbd>SPACE</kbd> untuk power bar, atau klik cepat</div>
           </div>
         </div>
       </section>
     </main>
   </div>
 
-  <!-- Lobby Setup Modal (Compact Zero-Scroll Desktop Layout + Sticky CTA Footer!) -->
-  <div id="setup-modal" class="modal-backdrop open">
+  <!-- Lobby Setup Modal -->
+  <div id="setup-modal" class="modal-backdrop">
     <div class="modal-card modal-setup">
       <div class="modal-header">
         <div>
-          <h2 id="setup-modal-title" class="modal-title">⚡ LUDOZ — LUDO ZAMAN NOW</h2>
-          <p class="modal-sub">Wajib dadu 6 keluar markas • Efek KO Khusus • Main Lokal atau Multiplayer Online!</p>
+          <h2 id="setup-modal-title" class="modal-title">LUDOZ — LUDO ZAMAN NOW</h2>
+          <p class="modal-sub">Wajib dadu 6 keluar markas • Efek KO khusus • Main lokal atau online</p>
         </div>
-        <button id="close-setup-btn" type="button" class="icon-btn" title="Tutup">✕</button>
+        <button id="close-setup-btn" type="button" class="icon-btn icon-only" title="Tutup" aria-label="Tutup" data-icon="close"></button>
       </div>
 
       <div class="modal-scroll-body">
-        <!-- Lobby Tabs: Local vs Online -->
         <div class="lobby-tabs">
-          <button type="button" class="lobby-tab active" data-tab="local">🎮 MAIN LOKAL / VS AI</button>
-          <button type="button" class="lobby-tab" data-tab="online">🌐 MULTIPLAYER ONLINE</button>
+          <button type="button" class="lobby-tab active" data-tab="local" data-icon="gamepad"><span>MAIN LOKAL</span></button>
+          <button type="button" class="lobby-tab" data-tab="online" data-icon="globe"><span>ONLINE</span></button>
+          <button type="button" class="lobby-tab" data-tab="style" data-icon="palette"><span>ARENA &amp; SKIN</span></button>
         </div>
 
-        <!-- Theme & Mode Row (Compact 2-Col Setup Grid!) -->
-        <div class="theme-mode-combo">
-          <div class="theme-picker-row">
-            <button type="button" class="theme-card selected" data-theme-pick="nusantara">
-              <strong>
-                <svg class="flag-svg" viewBox="0 0 24 16" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="8" rx="2" fill="#ff2a5f"/><rect y="8" width="24" height="8" rx="2" fill="#f8fafc"/></svg>
-                NUSANTARA CYBERPUNK
-              </strong>
-              <span>Garuda-01 • Barong-X • Macan-V • Naga-99 + Batik Neon</span>
-            </button>
-            <button type="button" class="theme-card" data-theme-pick="neo">
-              <strong>🌃 NEO-ARCADE</strong>
-              <span>Kitsune • Titan-X • Sparky • Phantom + Cyber Grid</span>
-            </button>
-          </div>
+        <!-- Local flow stepper -->
+        <div id="lobby-stepper" class="lobby-stepper">
+          <button type="button" class="step-pill active" data-step="1"><span class="step-num">1</span><span>Pilih Permainan</span></button>
+          <span class="step-line"></span>
+          <button type="button" class="step-pill" data-step="2"><span class="step-num">2</span><span>Pilih Pemain</span></button>
+        </div>
 
-          <div class="mode-grid">
-            <button type="button" class="mode-card selected" data-mode="blitz">
-              <h4>⚡ BLITZ MODE (2 Pion)</h4>
-              <p>Cepat &amp; sengit! Wajib dadu 6 keluar markas.</p>
-            </button>
-            <button type="button" class="mode-card" data-mode="classic">
-              <h4>👑 CLASSIC OVERDRIVE (4 Pion)</h4>
-              <p>Pertarungan penuh 4 pion per hero + efek KO!</p>
-            </button>
+        <!-- STEP 1 — Roster & mode (also shown on the online tab for the host) -->
+        <div id="theme-mode-combo" class="game-setup">
+          <div class="setup-block">
+            <div class="section-label" data-icon="layers"><span>Roster Hero</span></div>
+            <div id="theme-picker" class="theme-picker-row"></div>
+          </div>
+          <div class="setup-block">
+            <div class="section-label" data-icon="flag"><span>Mode Permainan</span></div>
+            <div class="mode-grid">
+              <button type="button" class="mode-card selected" data-mode="blitz">
+                <span class="mode-pawns"><i></i><i></i></span>
+                <span class="mode-text">
+                  <h4 data-icon="bolt"><span>BLITZ</span></h4>
+                  <p>2 pion per hero · cepat &amp; sengit</p>
+                </span>
+              </button>
+              <button type="button" class="mode-card" data-mode="classic">
+                <span class="mode-pawns four"><i></i><i></i><i></i><i></i></span>
+                <span class="mode-text">
+                  <h4 data-icon="crown"><span>CLASSIC</span></h4>
+                  <p>4 pion per hero · duel penuh</p>
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- LOCAL TAB CONTENT -->
-        <div id="tab-local" class="tab-panel active">
-          <div id="setup-heroes-grid" class="setup-heroes-grid"></div>
+        <!-- STEP 2 — Players -->
+        <div id="tab-local" class="tab-panel">
+          <div class="section-label" data-icon="user"><span>Siapa yang main?</span></div>
+          <div id="setup-heroes-grid" class="player-list"></div>
           <div id="setup-error" class="setup-error"></div>
         </div>
 
-        <!-- ONLINE MULTIPLAYER TAB CONTENT -->
+        <!-- ONLINE -->
         <div id="tab-online" class="tab-panel">
           <div id="online-entry" class="online-box">
             <div class="online-name-row">
-              <label for="online-name-input">Nama Kamu</label>
+              <label for="online-name-input">Nama kamu</label>
               <input id="online-name-input" type="text" maxlength="16" placeholder="Contoh: BangNeon" value="Player" />
             </div>
 
             <div class="online-split">
               <div class="online-card">
-                <h4>✨ Buat Room Baru</h4>
-                <p>Jadi Host, dapatkan Kode Room 4 huruf &amp; bagikan ke teman (1 Wi-Fi / Link).</p>
-                <button id="create-room-btn" type="button" class="primary-cta small-cta">➕ BUAT ROOM</button>
+                <h4 data-icon="sparkle"><span>Buat Room Baru</span></h4>
+                <p>Jadi host, dapat kode room 4 huruf, lalu bagikan ke teman.</p>
+                <button id="create-room-btn" type="button" class="primary-cta small-cta" data-icon="plus"><span>BUAT ROOM</span></button>
               </div>
               <div class="online-card">
-                <h4>🔑 Gabung Room Teman</h4>
-                <p>Masukkan 4 huruf kode room dari temanmu untuk langsung masuk!</p>
+                <h4 data-icon="key"><span>Gabung Room Teman</span></h4>
+                <p>Masukkan kode 4 huruf dari temanmu.</p>
                 <div class="join-input-row">
                   <input id="join-code-input" type="text" maxlength="4" placeholder="ABCD" />
                   <button id="join-room-btn" type="button" class="secondary-cta small-cta">GABUNG</button>
@@ -205,25 +216,42 @@
           <div id="online-room-view" class="online-box" style="display:none;">
             <div class="room-code-banner">
               <div>
-                <div class="turn-kicker">KODE ROOM ONLINE</div>
+                <div class="turn-kicker">KODE ROOM</div>
                 <div id="room-code-display" class="room-code-big">ABCD</div>
               </div>
               <div class="room-share-actions">
-                <button id="copy-link-btn" type="button" class="icon-btn">📋 Salin Link Invite</button>
-                <button id="leave-room-btn" type="button" class="icon-btn danger-btn">Keluar Room</button>
+                <button id="copy-link-btn" type="button" class="icon-btn" data-icon="copy"><span>Salin Link</span></button>
+                <button id="leave-room-btn" type="button" class="icon-btn danger-btn" data-icon="logout"><span>Keluar</span></button>
               </div>
             </div>
             <div id="lan-url-hint" class="lan-hint"></div>
             <div id="online-seats-grid" class="setup-heroes-grid"></div>
-            <div id="online-status-msg" class="setup-error" style="color:#7df9ff;"></div>
+            <div id="online-status-msg" class="setup-error info"></div>
           </div>
+        </div>
+
+        <!-- ARENA & SKIN -->
+        <div id="tab-style" class="tab-panel">
+          <div class="style-group">
+            <div class="section-label" data-icon="map"><span>Peta Arena</span></div>
+            <div id="map-picker" class="skin-grid skin-grid-map"></div>
+          </div>
+          <div class="style-group">
+            <div class="section-label" data-icon="pawn"><span>Skin Pion</span></div>
+            <div id="pawn-picker" class="skin-grid"></div>
+          </div>
+          <div class="style-group">
+            <div class="section-label" data-icon="dice"><span>Skin Dadu</span></div>
+            <div id="dice-picker" class="skin-grid skin-grid-dice"></div>
+          </div>
+          <p class="style-note" data-icon="info"><span>Skin bersifat lokal — tiap pemain melihat gaya pilihannya sendiri, termasuk saat main online.</span></p>
         </div>
       </div>
 
-      <!-- Sticky Footer CTA — NEVER cut off! -->
       <div class="modal-footer">
-        <button id="start-match-btn" type="button" class="primary-cta">🚀 GAS MAIN LOKAL!</button>
-        <button id="start-online-btn" type="button" class="primary-cta" style="display:none;">🚀 MULAI MATCH ONLINE!</button>
+        <button id="lobby-back-btn" type="button" class="secondary-cta back-cta" data-icon="arrowLeft"><span>KEMBALI</span></button>
+        <button id="start-match-btn" type="button" class="primary-cta" data-icon="play"><span>MULAI MAIN</span></button>
+        <button id="start-online-btn" type="button" class="primary-cta" style="display:none;" data-icon="play"><span>MULAI MATCH ONLINE</span></button>
       </div>
     </div>
   </div>
@@ -232,23 +260,24 @@
   <div id="help-modal" class="modal-backdrop">
     <div class="modal-card modal-setup">
       <div class="modal-header">
-        <h2 class="modal-title">📖 PANDUAN LUDOZ — LUDO ZAMAN NOW</h2>
-        <button id="close-help-btn" type="button" class="icon-btn">✕ Tutup</button>
+        <h2 class="modal-title">PANDUAN LUDOZ</h2>
+        <button id="close-help-btn" type="button" class="icon-btn icon-only" title="Tutup" aria-label="Tutup" data-icon="close"></button>
       </div>
-      <div id="help-body" class="modal-scroll-body" style="gap:14px;"></div>
+      <div id="help-body" class="modal-scroll-body help-body"></div>
     </div>
   </div>
 
   <!-- Victory Modal -->
   <div id="victory-modal" class="modal-backdrop">
     <div class="modal-card victory-card">
+      <div class="victory-trophy" data-icon="trophy"></div>
       <div id="victory-hero-avatar" class="victory-avatar"></div>
-      <h2 id="victory-title" class="modal-title">🏆 MENANG!</h2>
+      <h2 id="victory-title" class="modal-title">MENANG!</h2>
       <p id="victory-subtitle" class="modal-sub"></p>
       <div id="victory-stats" class="victory-stats"></div>
       <div class="victory-actions">
-        <button id="rematch-btn" type="button" class="primary-cta">🔁 MAIN LAGI</button>
-        <button id="back-lobby-btn" type="button" class="secondary-cta">⚙️ KE LOBBY</button>
+        <button id="rematch-btn" type="button" class="primary-cta" data-icon="rotateCw"><span>MAIN LAGI</span></button>
+        <button id="back-lobby-btn" type="button" class="secondary-cta" data-icon="settings"><span>KE LOBBY</span></button>
       </div>
     </div>
   </div>
