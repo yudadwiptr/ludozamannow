@@ -14,6 +14,9 @@ export class FXManager {
     this.rafId = null;
     this.resize();
     window.addEventListener('resize', () => this.resize());
+    if (typeof ResizeObserver !== 'undefined' && this.stage) {
+      new ResizeObserver(() => this.resize()).observe(this.stage);
+    }
   }
 
   resize() {

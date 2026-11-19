@@ -1,0 +1,25 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ludoz",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/server.mjs"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "ludoz-static",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "5190",
+        "--bind",
+        "127.0.0.1"
+      ],
+      "port": 5190
+    }
+  ]
+}

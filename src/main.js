@@ -67,7 +67,6 @@ const dom = {
   powerFill: document.getElementById('power-fill'),
   dockSkillBtn: document.getElementById('dock-skill-btn'),
   emoteBar: document.getElementById('emote-bar'),
-  battleLog: document.getElementById('battle-log'),
   themeBtn: document.getElementById('theme-btn'),
   soundBtn: document.getElementById('sound-btn'),
   helpBtn: document.getElementById('help-btn'),
@@ -136,14 +135,11 @@ let engine;
 let online;
 let isLaunching = false;
 
-function addBattleLog(text, color = '#cbd5e1') {
-  const row = document.createElement('div');
-  row.className = 'log-item';
-  row.style.setProperty('--log-color', color);
-  row.textContent = text;
-  dom.battleLog.prepend(row);
-  while (dom.battleLog.children.length > 30) {
-    dom.battleLog.lastChild.remove();
+function addBattleLog(text) {
+  // Battle feed removed — surface only major board-wide moments as a clean toast
+  if (!text) return;
+  if (/BOARD EVENT|REVERSE UNO|SUPPLY DROP/i.test(text)) {
+    showToast(text, 'zap');
   }
 }
 
@@ -211,7 +207,6 @@ online = new OnlineClient({
       type: s.type,
       name: s.name || null,
     }));
-    dom.battleLog.innerHTML = '';
     closeAllModals();
     renderEmoteBar(room.theme);
     renderHelpGuide(room.theme);
@@ -247,7 +242,6 @@ online = new OnlineClient({
       ? 'Koneksi ke host terputus. Permainan selesai.'
       : 'Host keluar dari room. Permainan selesai.';
     startPreviewMatch();
-    dom.battleLog.innerHTML = '';
     addBattleLog(msg, '#fb7185');
     showToast(msg, 'alert');
     closeAllModals();
@@ -504,7 +498,7 @@ function syncLobbyView() {
     pill.classList.toggle('done', n < localStep);
   });
 
-  const showSetup = (tab === 'local' && localStep === 1) || (tab === 'online' && !isGuestOnline());
+  const showSetup = (tab === 'local' && localStep === 1) || (tab === 'online' && online.isConnected && online.isHost);
   dom.themeModeCombo.style.display = showSetup ? '' : 'none';
   dom.tabLocal.classList.toggle('active', tab === 'local' && localStep === 2);
   dom.tabOnline.classList.toggle('active', tab === 'online');
@@ -512,9 +506,17 @@ function syncLobbyView() {
 
   const isLocal = playTab === 'local';
   const onStep2 = isLocal && tab === 'local' && localStep === 2;
-  dom.lobbyBackBtn.style.display = onStep2 ? 'flex' : 'none';
-  dom.startMatchBtn.style.display = isLocal ? 'flex' : 'none';
-  dom.startOnlineBtn.style.display = !isLocal && online.isConnected && online.isHost ? 'flex' : 'none';
+  const showBack = onStep2;
+  const showStartLocal = isLocal;
+  const showStartOnline = !isLocal && online.isConnected && online.isHost;
+
+  dom.lobbyBackBtn.style.display = showBack ? 'flex' : 'none';
+  dom.startMatchBtn.style.display = showStartLocal ? 'flex' : 'none';
+  dom.startOnlineBtn.style.display = showStartOnline ? 'flex' : 'none';
+  const footer = dom.setupModal.querySelector('.modal-footer');
+  if (footer) {
+    footer.style.display = showBack || showStartLocal || showStartOnline ? '' : 'none';
+  }
 
   const goesToStep2 = isLocal && !(tab === 'local' && localStep === 2);
   dom.startMatchBtn.innerHTML = goesToStep2
@@ -663,7 +665,6 @@ async function launchLocalMatch() {
       modeLabel: lobbyState.mode === 'blitz' ? 'BLITZ · 2 PION' : 'CLASSIC · 4 PION',
     });
 
-    dom.battleLog.innerHTML = '';
     renderEmoteBar(lobbyState.theme);
     renderHelpGuide(lobbyState.theme);
     engine.startMatch({
@@ -931,7 +932,6 @@ dom.leaveRoomBtn.addEventListener('click', async () => {
   await online.disconnect(true);
   if (wasInOnlineMatch) {
     startPreviewMatch();
-    dom.battleLog.innerHTML = '';
   }
   renderOnlineRoom();
 });

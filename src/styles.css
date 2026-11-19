@@ -4891,3 +4891,193 @@ body[data-theme="nusantara"] .brand-logo,
   opacity: 0.6;
   cursor: wait;
 }
+
+/* ============================================================================
+   v9 — Battle Feed Removed + Native Single-Screen Mobile Layout (100dvh)
+   ============================================================================ */
+
+/* Desktop: anchor Emote + Credit cleanly to bottom of Left Column */
+@media (min-width: 901px) {
+  .left-col .emote-panel {
+    margin-top: auto;
+  }
+}
+
+/* Touch-safe press-and-hold roll button across all touch devices */
+.roll-btn {
+  touch-action: none;
+  -webkit-user-select: none;
+}
+
+@media (max-width: 900px) {
+  html, body {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .app-shell {
+    height: 100dvh;
+    min-height: 100dvh;
+    padding: 5px 8px calc(4px + env(safe-area-inset-bottom));
+    gap: 5px;
+    overflow: hidden;
+  }
+
+  .top-bar {
+    padding: 4px 8px;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+
+  .arena-grid {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    overflow: hidden;
+  }
+
+  #left-cards { order: 1; flex-shrink: 0; }
+  #right-cards { order: 2; flex-shrink: 0; }
+  .board-col {
+    order: 3;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    container-type: size;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .emote-panel {
+    order: 4;
+    flex-shrink: 0;
+    padding: 4px 6px;
+    border-radius: 10px;
+    margin: 0;
+  }
+  .dock-panel {
+    order: 5;
+    position: static;
+    flex-shrink: 0;
+    margin: 0 -8px;
+    padding: 7px 10px 7px;
+    border-radius: 15px 15px 0 0;
+  }
+  .app-credit {
+    order: 6;
+    flex-shrink: 0;
+    padding: 1px 0 0;
+    font-size: 0.58rem;
+    opacity: 0.72;
+  }
+
+  /* Compact 2x2 Hero cards */
+  #left-cards,
+  #right-cards {
+    gap: 5px;
+  }
+
+  .hero-card {
+    padding: 5px 7px;
+    gap: 3px;
+    border-radius: 10px;
+  }
+
+  .hero-avatar {
+    width: 26px;
+    height: 26px;
+  }
+
+  .hero-name {
+    font-size: 0.66rem;
+  }
+
+  .energy-track {
+    height: 4px;
+  }
+
+  /* Dynamic square board via container query — auto-adapts when Event Banner or Overdrive button shows! */
+  .board-perspective-wrap {
+    width: min(100cqw, 100cqh);
+    height: min(100cqw, 100cqh);
+    max-width: 540px;
+    max-height: 540px;
+  }
+
+  .board-stage {
+    width: 100%;
+    height: 100%;
+    border-radius: 13px;
+    padding: 3px;
+  }
+
+  /* Slim 1-row horizontally scrollable Emote strip right above Dock */
+  .emote-panel .panel-mini-title {
+    display: none;
+  }
+
+  .emote-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    gap: 5px;
+  }
+
+  .emote-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .emote-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 4px 9px;
+    font-size: 0.66rem;
+    border-radius: 999px;
+  }
+
+  /* Expanded thumb-friendly invisible tap target on selectable pawns */
+  .pawn-token.selectable::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+  }
+
+  /* Keep toast neatly above the bottom dock on phones */
+  .app-toast {
+    bottom: auto;
+    top: 52px;
+    max-width: calc(100vw - 24px);
+    font-size: 0.72rem;
+    padding: 7px 12px;
+  }
+}
+
+/* Very small / landscape phones: allow smooth scroll so nothing gets crushed */
+@media (max-width: 900px) and (max-height: 610px) {
+  html, body, .app-shell {
+    height: auto;
+    min-height: 100dvh;
+    overflow-y: auto;
+  }
+
+  .arena-grid {
+    height: auto;
+    overflow: visible;
+  }
+
+  .board-col {
+    flex: none;
+    container-type: normal;
+  }
+
+  .board-perspective-wrap {
+    width: min(100%, 380px);
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+}
