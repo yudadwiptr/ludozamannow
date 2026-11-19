@@ -103,6 +103,17 @@ function broadcast(room, eventName, payload) {
   }
 }
 
+// Host left (or never came back) -> close the room for everyone
+function closeRoom(code, room, reason) {
+  clearTimeout(room.hostGraceTimer);
+  broadcast(room, 'room_closed', { code, reason });
+  for (const res of room.clients.values()) {
+    try { res.end(); } catch { /* already closed */ }
+  }
+  room.clients.clear();
+  rooms.delete(code);
+}
+
 setInterval(() => {
   const cutoff = Date.now() - 2 * 60 * 60 * 1000;
   for (const [code, room] of rooms.entries()) {
@@ -202,6 +213,7 @@ const server = http.createServer(async (req, res) => {
       });
       res.write(`retry: 2000\n\n`);
       room.clients.set(clientId, res);
+      if (clientId === room.hostId) clearTimeout(room.hostGraceTimer);
       broadcast(room, 'room_update', serializeRoom(room));
 
       const heartbeat = setInterval(() => {
@@ -217,6 +229,15 @@ const server = http.createServer(async (req, res) => {
         if (room.clients.get(clientId) === res) {
           room.clients.delete(clientId);
           broadcast(room, 'room_update', serializeRoom(room));
+          // Give the host a short window to reconnect (page refresh, flaky Wi-Fi)
+          if (clientId === room.hostId && rooms.get(room.code) === room) {
+            clearTimeout(room.hostGraceTimer);
+            room.hostGraceTimer = setTimeout(() => {
+              if (!room.clients.has(room.hostId) && rooms.get(room.code) === room) {
+                closeRoom(room.code, room, 'host_disconnected');
+              }
+            }, 8000);
+          }
         }
       });
       return;
@@ -286,6 +307,10 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && sub === 'leave') {
       try {
         const body = await readJsonBody(req);
+        if (body.clientId === room.hostId) {
+          closeRoom(room.code, room, 'host_left');
+          return sendJson(res, 200, { ok: true, closed: true });
+        }
         const idx = room.seats.findIndex((s) => s.clientId === body.clientId);
         if (idx !== -1) room.seats[idx] = { type: 'ai', clientId: null, name: null };
         room.clients.delete(body.clientId);

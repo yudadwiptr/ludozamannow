@@ -900,11 +900,15 @@ export class GameRenderer {
         isActive && state.phaseDashActive ? `<span class="buff-chip">${icon('sparkle')} +3 PHASE</span>` :
         isActive && state.sparkySplitArmed ? `<span class="buff-chip">${icon('bolt')} SPLIT</span>` : '';
 
+      // Player name is the card title; the hero name drops to the footer
+      const playerName = pl.displayName ? escapeHTML(pl.displayName) : null;
       const roleLabel = pl.type === 'ai'
         ? `${icon('bot')}AI`
         : isMeOnline
-          ? `${icon('star')}${escapeHTML(pl.displayName || 'KAMU')}`
-          : `${icon('user')}${escapeHTML(pl.displayName || 'P' + (hero.id + 1))}`;
+          ? `${icon('star')}KAMU`
+          : playerName
+            ? `${icon('globe')}ONLINE`
+            : `${icon('user')}P${hero.id + 1}`;
 
       return `
         <div class="hero-card ${isActive ? 'active' : ''}" data-hero-id="${hero.id}" style="--hero-color:${hero.color}; --hero-glow:${hero.glow}">
@@ -913,7 +917,7 @@ export class GameRenderer {
             <div class="hero-avatar">${hero.svgAvatar}</div>
             <div class="hero-meta">
               <div class="hero-name-row">
-                <span class="hero-name">${hero.name}</span>
+                <span class="hero-name" title="${playerName ? playerName + ' · ' + hero.name : hero.name}">${playerName || hero.name}</span>
                 <span class="role-pill ${pl.type}">${roleLabel}</span>
               </div>
               <div class="hero-stats-row">
@@ -938,7 +942,7 @@ export class GameRenderer {
             <div class="mini-dice-row">${diceIcons}</div>
             ${canUseSkill
               ? `<button type="button" class="skill-trigger-btn" data-action="skill">${icon('bolt')}AKTIFKAN</button>`
-              : `<span class="skill-hint" title="${hero.skillDesc}">${energyPct >= 100 ? 'SKILL SIAP' : hero.title}</span>`
+              : `<span class="skill-hint" title="${hero.skillDesc}">${energyPct >= 100 ? 'SKILL SIAP' : playerName ? hero.name : hero.title}</span>`
             }
           </div>
         </div>

@@ -147,6 +147,39 @@ function addBattleLog(text, color = '#cbd5e1') {
   }
 }
 
+let toastTimer = null;
+function showToast(text, iconName = 'info') {
+  let el = document.getElementById('app-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'app-toast';
+    el.className = 'app-toast';
+    el.setAttribute('role', 'status');
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `${icon(iconName)}<span></span>`;
+  el.querySelector('span').textContent = text;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 4200);
+}
+
+/** Idle board shown behind the lobby (no AI runs until a human rolls). */
+function startPreviewMatch() {
+  engine.startMatch({
+    mode: 'blitz',
+    theme: lobbyState.theme,
+    playerConfigs: [
+      { heroId: 0, type: 'human' },
+      { heroId: 1, type: 'ai' },
+      { heroId: 2, type: 'ai' },
+      { heroId: 3, type: 'ai' },
+    ],
+  });
+}
+
+window.addEventListener('pagehide', () => online.leaveOnUnload());
+
 function closeAllModals() {
   dom.setupModal.classList.remove('open');
   dom.victoryModal.classList.remove('open');
@@ -205,6 +238,18 @@ online = new OnlineClient({
   },
   onGameAction: (action) => {
     engine.enqueueRemoteAction(action);
+  },
+  onRoomClosed: (reason) => {
+    const msg = reason === 'host_disconnected'
+      ? 'Host terputus dari room. Permainan selesai.'
+      : 'Host keluar dari room. Permainan selesai.';
+    startPreviewMatch();
+    dom.battleLog.innerHTML = '';
+    addBattleLog(msg, '#fb7185');
+    showToast(msg, 'alert');
+    closeAllModals();
+    openLobby('online');
+    dom.onlineError.textContent = msg;
   },
   onConnectionChange: (connected) => {
     if (!connected && online.isConnected) {
@@ -845,7 +890,12 @@ dom.copyLinkBtn.addEventListener('click', async () => {
 
 dom.leaveRoomBtn.addEventListener('click', async () => {
   sfx.click();
+  const wasInOnlineMatch = engine.state?.online.enabled;
   await online.disconnect(true);
+  if (wasInOnlineMatch) {
+    startPreviewMatch();
+    dom.battleLog.innerHTML = '';
+  }
   renderOnlineRoom();
 });
 
@@ -940,16 +990,7 @@ renderHelpGuide(lobbyState.theme);
 renderSetupModal();
 renderStylePickers();
 
-engine.startMatch({
-  mode: 'blitz',
-  theme: lobbyState.theme,
-  playerConfigs: [
-    { heroId: 0, type: 'human' },
-    { heroId: 1, type: 'ai' },
-    { heroId: 2, type: 'ai' },
-    { heroId: 3, type: 'ai' },
-  ],
-});
+startPreviewMatch();
 
 const urlRoom = new URLSearchParams(window.location.search).get('room');
 if (urlRoom && /^[A-Za-z0-9]{4}$/.test(urlRoom.trim())) {

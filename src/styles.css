@@ -3830,3 +3830,144 @@ body[data-theme="nusantara"] .brand-logo {
     font-size: 0.66rem;
   }
 }
+
+/* ============================================================================
+   v4 — Emote bubble stays inside the card (no clipping at the top edge)
+   ============================================================================ */
+
+.emote-anchor {
+  top: 6px;
+  right: 8px;
+  left: 56px;
+  display: flex;
+  justify-content: flex-end;
+  z-index: 50;
+}
+
+.emote-bubble {
+  display: inline-flex;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: 12px;
+  padding: 6px 11px;
+  font-size: 0.76rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55), 0 0 0 2px var(--hero-color);
+}
+
+.emote-bubble span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hero-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================================
+   v4 — Calm mode: fewer always-on animations, softer glow & shake
+   ============================================================================ */
+
+.svg-spin-center,
+.hero-home-lane .svg-dash-flow,
+.event-banner.active,
+.energy-fill.full,
+.skill-trigger-btn,
+.ld-stage::before {
+  animation: none;
+}
+
+.svg-dash-flow {
+  animation-duration: 2.4s;
+}
+
+.skill-trigger-btn {
+  box-shadow: 0 0 10px var(--hero-glow);
+}
+
+.pawn-token.selectable .pawn-core {
+  animation: pawnBreathe 1.4s ease-in-out infinite alternate;
+}
+
+.pawn-token.selectable .pawn-ring {
+  animation-duration: 1.6s;
+}
+
+@keyframes pawnBreathe {
+  from { transform: scale(1.06); }
+  to { transform: scale(1.14); }
+}
+
+.hero-yard-group.yard-active {
+  filter: drop-shadow(0 0 8px var(--active-glow));
+}
+
+.hero-home-lane.lane-active {
+  filter: none;
+}
+
+.board-stage {
+  box-shadow:
+    0 0 0 1px rgba(148, 163, 184, 0.22),
+    0 18px 46px rgba(0, 0, 0, 0.72),
+    0 0 22px var(--active-glow);
+}
+
+.hero-card.active {
+  box-shadow: 0 0 14px color-mix(in srgb, var(--hero-color) 26%, transparent);
+  transform: none;
+}
+
+.die[data-skin="kaca"]::after {
+  animation-duration: 6s;
+}
+
+@keyframes shakeHeavy {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-3px, 2px); }
+  50% { transform: translate(3px, -2px); }
+  75% { transform: translate(-2px, 1px); }
+}
+
+@keyframes shakeLight {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(1.5px, -1px); }
+}
+
+/* Toast */
+.app-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  z-index: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: rgba(12, 16, 30, 0.96);
+  border: 1.5px solid #fb7185;
+  color: #f8fafc;
+  font-size: 0.82rem;
+  font-weight: 700;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+  transform: translate(-50%, 20px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.app-toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.app-toast .ico {
+  width: 16px;
+  height: 16px;
+  color: #fb7185;
+}

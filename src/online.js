@@ -40,8 +40,9 @@ function loadPeerJS() {
 }
 
 export class OnlineClient {
-  constructor({ onRoomUpdate, onMatchStart, onGameAction, onConnectionChange }) {
+  constructor({ onRoomUpdate, onMatchStart, onGameAction, onConnectionChange, onRoomClosed }) {
     this.onRoomUpdate = onRoomUpdate;
+    this.onRoomClosed = onRoomClosed;
     this.onMatchStart = onMatchStart;
     this.onGameAction = onGameAction;
     this.onConnectionChange = onConnectionChange;
@@ -167,6 +168,19 @@ export class OnlineClient {
         this.onGameAction?.(JSON.parse(ev.data));
       } catch {}
     });
+
+    this.es.addEventListener('room_closed', (ev) => {
+      let reason = 'host_left';
+      try { reason = JSON.parse(ev.data).reason || reason; } catch {}
+      this._handleRoomClosed(reason);
+    });
+  }
+
+  /** Guest side: the host left -> drop the session and tell the app. */
+  _handleRoomClosed(reason) {
+    if (!this.room || this.isHost) return;
+    this.disconnect(false);
+    this.onRoomClosed?.(reason);
   }
 
   // --------------------------------------------------------------------------
@@ -316,10 +330,17 @@ export class OnlineClient {
             this.onMatchStart?.(msg.payload);
           } else if (msg.event === 'game_action') {
             this.onGameAction?.(msg.payload);
+          } else if (msg.event === 'room_closed') {
+            this._handleRoomClosed(msg.payload?.reason || 'host_left');
           }
         });
 
         conn.on('close', () => {
+          // In P2P the host *is* the room: losing it ends the session
+          if (settled && this.hostConn === conn) {
+            this._handleRoomClosed('host_disconnected');
+            return;
+          }
           this.onConnectionChange?.(false);
         });
 
@@ -439,6 +460,19 @@ export class OnlineClient {
     }
   }
 
+  /** Best-effort leave while the page is unloading (closes the room if we are the host). */
+  leaveOnUnload() {
+    if (!this.roomCode || !this.clientId) return;
+    if (this.transport === 'sse') {
+      try {
+        const blob = new Blob([JSON.stringify({ clientId: this.clientId })], { type: 'application/json' });
+        navigator.sendBeacon(`/api/rooms/${this.roomCode}/leave`, blob);
+      } catch {}
+    } else if (this.isHost) {
+      this._p2pBroadcast('room_closed', { code: this.roomCode, reason: 'host_left' });
+    }
+  }
+
   async disconnect(notifyServer = true) {
     if (notifyServer && this.roomCode && this.clientId) {
       if (this.transport === 'sse') {
@@ -449,6 +483,10 @@ export class OnlineClient {
             body: JSON.stringify({ clientId: this.clientId }),
           });
         } catch {}
+      } else if (this.isHost && this.guestConns.size > 0) {
+        // P2P host leaving: tell every guest the room is closed
+        this._p2pBroadcast('room_closed', { code: this.roomCode, reason: 'host_left' });
+        await new Promise((r) => setTimeout(r, 150)); // let the message flush before closing
       } else if (this.hostConn?.open) {
         try {
           this.hostConn.send({ cmd: 'leave' });
@@ -460,8 +498,9 @@ export class OnlineClient {
       this.es = null;
     }
     if (this.hostConn) {
-      try { this.hostConn.close(); } catch {}
+      const conn = this.hostConn;
       this.hostConn = null;
+      try { conn.close(); } catch {}
     }
     for (const c of this.guestConns.values()) {
       try { c.close(); } catch {}
