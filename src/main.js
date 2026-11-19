@@ -56,7 +56,6 @@ const dom = {
   roundBadge: document.getElementById('round-badge'),
   dirBadge: document.getElementById('dir-badge'),
   eventBanner: document.getElementById('event-banner'),
-  turnHeroName: document.getElementById('turn-hero-name'),
   turnPrompt: document.getElementById('turn-prompt'),
   cancelSkillBtn: document.getElementById('cancel-skill-btn'),
   diceCube: document.getElementById('dice-cube'),

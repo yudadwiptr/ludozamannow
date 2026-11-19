@@ -87,41 +87,38 @@
         </div>
       </section>
 
-      <!-- Right: Hero 1 & 2 + Dice Dock -->
+      <!-- Right: Hero 1 & 2 + Revamped Click-to-Roll Dice Dock -->
       <section class="side-col right-col">
         <div id="right-cards" class="cards-stack"></div>
 
         <div class="dock-panel">
-          <div class="turn-header">
-            <div class="turn-header-main">
-              <div class="turn-kicker">GILIRAN AKTIF</div>
-              <div id="turn-hero-name"></div>
-            </div>
+          <!-- Overdrive Skill Quick Trigger (appears when 100% charged) -->
+          <button id="dock-skill-btn" type="button" class="dock-skill-btn"></button>
+
+          <!-- Prompt Strip (No duplicated Hero Name!) -->
+          <div class="dock-status-row">
+            <div id="turn-prompt" class="turn-prompt">Cari angka 6 untuk keluar dari markas!</div>
             <button id="cancel-skill-btn" type="button" class="cancel-skill-btn" data-icon="close"><span>Batal</span></button>
           </div>
-          <div id="turn-prompt">Cari angka 6 untuk keluar dari markas!</div>
 
-          <div class="dice-stage-row">
-            <div id="dice-cube" class="die dice-cube" data-skin="neon"></div>
+          <!-- Main Interactive Clickable 3D Dice Pad -->
+          <div class="dice-action-stage">
+            <button id="roll-btn" type="button" class="dice-roll-pad" aria-label="Klik atau tahan dadu untuk melempar">
+              <span class="dice-pad-halo"></span>
+              <span id="dice-cube" class="die dice-cube" data-skin="neon"></span>
+              <span id="roll-btn-text" class="dice-pad-badge">TAP DADU</span>
+              <span class="dice-power-track"><span id="power-fill" class="power-fill"></span></span>
+            </button>
             <div id="dice-info-label" class="dice-info-label"></div>
           </div>
 
+          <!-- Revamped Tactical Dice Cards Deck -->
           <div class="loadout-block">
-            <div class="panel-mini-title" data-icon="backpack"><span>LOADOUT DADU</span></div>
+            <div class="panel-mini-title" data-icon="backpack"><span>KARTU DADU</span></div>
             <div id="dice-loadout" class="dice-loadout"></div>
           </div>
 
-          <button id="dock-skill-btn" type="button" class="dock-skill-btn"></button>
-
-          <div class="roll-group">
-            <button id="roll-btn" type="button" class="roll-btn">
-              <span id="power-fill" class="power-fill"></span>
-              <span class="roll-btn-inner">
-                <span id="roll-btn-text" class="roll-btn-text">LEMPAR</span>
-              </span>
-            </button>
-            <div class="roll-hint">Tahan tombol / <kbd>SPACE</kbd> untuk power bar, atau klik cepat</div>
-          </div>
+          <div class="roll-hint">Klik / tahan dadu atau <kbd>SPACE</kbd> untuk lempar</div>
         </div>
       </section>
     </main>

@@ -326,6 +326,7 @@ export class GameRenderer {
         stroke: hero.color,
         'stroke-width': 2.2,
         'stroke-dasharray': map.yardPattern ? '20 8 4 8' : '14 8',
+        class: 'yard-inner-box',
       }));
 
       // Faint hero avatar watermark
@@ -386,6 +387,7 @@ export class GameRenderer {
           'stroke-width': 1.8,
           'stroke-dasharray': '7 6',
           opacity: '0.55',
+          class: 'pad-dashed-ring',
         }));
         yardG.appendChild(svgEl('circle', { cx, cy, r: 10, fill: hero.color, opacity: '0.28' }));
       });
@@ -914,12 +916,15 @@ export class GameRenderer {
 
       return `
         <div class="hero-card ${isActive ? 'active' : ''}" data-hero-id="${hero.id}" style="--hero-color:${hero.color}; --hero-glow:${hero.glow}">
+          <span class="hero-spine"></span>
           <div class="emote-anchor" id="emote-anchor-${hero.id}"></div>
           <div class="hero-card-head">
             <div class="hero-avatar">${hero.svgAvatar}</div>
             <div class="hero-meta">
               <div class="hero-name-row">
-                <span class="hero-name" title="${playerName ? playerName + ' · ' + hero.name : hero.name}">${playerName || hero.name}</span>
+                <span class="hero-name" title="${playerName ? playerName + ' · ' + hero.name : hero.name}">
+                  ${isActive ? '<span class="turn-beacon" aria-label="Giliran aktif"></span>' : ''}${playerName || hero.name}
+                </span>
                 <span class="role-pill ${pl.type}">${roleLabel}</span>
               </div>
               <div class="hero-stats-row">
@@ -976,28 +981,24 @@ export class GameRenderer {
     const canRoll = isMyTurn && state.phase === 'WAITING_ROLL';
     const diceDef = DICE_TYPES[state.phase === 'ROLLING' || state.phase === 'SELECT_PAWN' ? state.rolledDiceId : state.selectedDice];
 
-    const ownerTag = player.displayName ? ` · ${escapeHTML(player.displayName)}` : '';
-    this.dom.turnHeroName.innerHTML = `<span class="turn-avatar">${player.hero.svgAvatar}</span><span>${player.hero.name}${ownerTag}</span>`;
-    this.dom.turnHeroName.style.color = player.hero.color;
-
     let prompt = '';
     if (state.phase === 'WAITING_ROLL') {
       if (isMyTurn) {
         const allInBase = player.pawns.every((pw) => pw.finished || pw.progress === -1);
-        prompt = allInBase ? 'Cari angka 6 untuk keluar dari markas!' : 'Pilih dadu, lalu tahan/klik LEMPAR.';
+        prompt = allInBase ? 'Cari angka 6 — ketuk dadu untuk keluar!' : 'Pilih kartu dadu, lalu ketuk dadu!';
       } else if (player.type === 'ai') {
         prompt = 'AI sedang menyusun taktik...';
       } else {
-        prompt = `Menunggu ${player.displayName || player.hero.name} melempar dadu...`;
+        prompt = `Menunggu ${player.displayName || player.hero.name} melempar...`;
       }
     } else if (state.phase === 'ROLLING') {
       prompt = 'Dadu bergulir...';
     } else if (state.phase === 'SELECT_PAWN') {
-      prompt = isMyTurn ? 'Arahkan ke pion menyala untuk preview jalur, lalu klik.' : `Menunggu ${player.hero.name} memilih pion...`;
+      prompt = isMyTurn ? 'Ketuk pion yang menyala di papan!' : `Menunggu ${player.hero.name} memilih pion...`;
     } else if (state.phase === 'SKILL_SELECT_OWN') {
-      prompt = isMyTurn ? 'Klik pionmu yang menyala untuk skill (atau Batal).' : `${player.hero.name} memilih target skill...`;
+      prompt = isMyTurn ? 'Pilih pionmu untuk skill (atau Batal).' : `${player.hero.name} memilih target skill...`;
     } else if (state.phase === 'SKILL_SELECT_ENEMY') {
-      prompt = isMyTurn ? 'Hover pion LAWAN untuk lihat jalur tukar, lalu klik.' : `${player.hero.name} membidik lawan...`;
+      prompt = isMyTurn ? 'Pilih pion LAWAN untuk ditukar!' : `${player.hero.name} membidik lawan...`;
     } else if (state.phase === 'ANIMATING') {
       prompt = 'Aksi berlangsung...';
     } else if (state.phase === 'GAME_OVER') {
@@ -1008,7 +1009,7 @@ export class GameRenderer {
     const inSkillSelect = isMyTurn && (state.phase === 'SKILL_SELECT_OWN' || state.phase === 'SKILL_SELECT_ENEMY');
     this.dom.cancelSkillBtn.style.display = inSkillSelect ? 'inline-flex' : 'none';
 
-    // Dice cube — skin-aware face
+    // Dice cube — skin-aware face inside the clickable roll pad
     const cube = this.dom.diceCube;
     cube.dataset.skin = this.cosmetics.dice;
     cube.style.setProperty('--dice-color', diceDef.color);
@@ -1044,43 +1045,44 @@ export class GameRenderer {
       const countBadge = id === 'normal' ? '∞' : `×${counts[id]}`;
       return `
         <button type="button"
-          class="dice-chip ${selected ? 'selected' : ''}"
+          class="dice-card ${selected ? 'selected' : ''}"
           data-dice-id="${id}"
           style="--chip-color:${def.color}"
           ${!canRoll ? 'disabled' : ''}
           title="${def.desc}">
-          <span class="chip-icon">${icon(def.icon)}</span>
-          <span class="chip-name">${def.name}</span>
-          <span class="chip-qty">${countBadge}</span>
+          <span class="dice-card-bar"></span>
+          <span class="dice-card-qty">${countBadge}</span>
+          <span class="dice-card-ico">${icon(def.icon, { stroke: 2 })}</span>
+          <span class="dice-card-name">${def.name}</span>
+          <span class="dice-card-tag">${def.short}</span>
         </button>
       `;
     }).join('');
 
-    this.dom.diceLoadout.querySelectorAll('.dice-chip').forEach((btn) => {
+    this.dom.diceLoadout.querySelectorAll('.dice-card').forEach((btn) => {
       btn.addEventListener('click', () => this.cb.onSelectDice(btn.dataset.diceId));
     });
 
     this.dom.rollBtn.disabled = !canRoll;
+    this.dom.rollBtn.classList.toggle('ready', canRoll);
     this.dom.rollBtn.style.setProperty('--hero-color', player.hero.color);
-    let rollGlyph = 'dice';
-    let rollText = 'LEMPAR';
+    this.dom.rollBtn.style.setProperty('--hero-glow', player.hero.glow);
+
+    let rollText = 'TAP DADU';
     if (!canRoll) {
-      if (state.phase === 'SELECT_PAWN' && isMyTurn) {
-        rollGlyph = 'pointer';
+      if (state.phase === 'ROLLING') {
+        rollText = 'GULIR...';
+      } else if (state.phase === 'SELECT_PAWN' && isMyTurn) {
         rollText = 'PILIH PION';
       } else if (player.type === 'ai') {
-        rollGlyph = 'bot';
         rollText = 'GILIRAN AI';
       } else if (!isMyTurn && state.online.enabled) {
-        rollGlyph = 'hourglass';
-        rollText = `GILIRAN ${(player.displayName || player.hero.name).toUpperCase()}`;
+        rollText = 'TUNGGU';
       } else {
-        rollGlyph = 'hourglass';
-        rollText = 'TUNGGU...';
+        rollText = 'TUNGGU';
       }
     }
-    this.dom.rollBtnText.innerHTML = `${icon(rollGlyph, { stroke: 2.2 })}<span></span>`;
-    this.dom.rollBtnText.querySelector('span').textContent = rollText;
+    this.dom.rollBtnText.textContent = rollText;
 
     const canSkill = canRoll && player.energy >= OVERDRIVE_COST;
     this.dom.dockSkillBtn.style.display = canSkill ? 'flex' : 'none';
