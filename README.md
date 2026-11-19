@@ -29,3 +29,7 @@ npm start
 ```
 
 Buka browser di **http://localhost:5173** (atau bagikan URL LAN yang tampil di terminal untuk mabar 1 Wi-Fi).
+
+---
+
+Built by [yumastudio.digital](https://yumastudio.digital/)

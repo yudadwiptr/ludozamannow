@@ -977,6 +977,7 @@ function renderHelpGuide(themeId) {
       <h4>${icon('alert')}Board Events</h4>
       <div class="guide-grid">${eventRows}</div>
     </div>
+    <div class="modal-credit guide-credit">LudoZ — Built by <a href="https://yumastudio.digital/" target="_blank" rel="noopener">yumastudio.digital</a></div>
   `;
 }
 
