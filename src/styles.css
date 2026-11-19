@@ -3091,16 +3091,17 @@ body[data-pawn-skin="bidak"] .pawn-core {
 }
 
 .ld-cube3d {
-  --die: 82px;
+  --cube: 82px;
+  --die: var(--cube);
   position: relative;
-  width: 82px;
-  height: 82px;
+  width: var(--cube);
+  height: var(--cube);
   transform-style: preserve-3d;
   animation: cubeTumble 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
 }
 
 .ld-cube3d .cube-face {
-  --die: 82px;
+  --die: var(--cube);
   position: absolute;
   inset: 0;
   border-radius: 12px;
@@ -3112,12 +3113,12 @@ body[data-pawn-skin="bidak"] .pawn-core {
   background: linear-gradient(135deg, rgba(60, 140, 160, 0.9), rgba(110, 60, 150, 0.9));
 }
 
-.cf-0 { transform: translateZ(41px); }
-.cf-1 { transform: rotateY(180deg) translateZ(41px); }
-.cf-2 { transform: rotateY(90deg) translateZ(41px); }
-.cf-3 { transform: rotateY(-90deg) translateZ(41px); }
-.cf-4 { transform: rotateX(90deg) translateZ(41px); }
-.cf-5 { transform: rotateX(-90deg) translateZ(41px); }
+.cf-0 { transform: translateZ(calc(var(--cube) / 2)); }
+.cf-1 { transform: rotateY(180deg) translateZ(calc(var(--cube) / 2)); }
+.cf-2 { transform: rotateY(90deg) translateZ(calc(var(--cube) / 2)); }
+.cf-3 { transform: rotateY(-90deg) translateZ(calc(var(--cube) / 2)); }
+.cf-4 { transform: rotateX(90deg) translateZ(calc(var(--cube) / 2)); }
+.cf-5 { transform: rotateX(-90deg) translateZ(calc(var(--cube) / 2)); }
 
 @keyframes cubeTumble {
   0% { transform: rotateX(-24deg) rotateY(0deg) rotateZ(0deg); }
@@ -4453,5 +4454,349 @@ body[data-theme="nusantara"] .brand-logo,
 
   .dice-cube {
     --die: 44px;
+  }
+}
+
+/* ============================================================================
+   v6 — Mobile lobby & loading screen
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  /* Modal shell */
+  .modal-backdrop {
+    padding: 8px;
+    align-items: stretch;
+  }
+
+  .modal-card {
+    max-height: calc(100dvh - 16px);
+    border-radius: 18px;
+  }
+
+  .modal-setup {
+    max-width: none;
+  }
+
+  .modal-setup .modal-header {
+    padding: 12px 14px 10px;
+  }
+
+  .modal-title {
+    font-size: 0.98rem;
+    letter-spacing: 0.8px;
+  }
+
+  .modal-setup .modal-sub {
+    display: none;
+  }
+
+  .modal-setup .modal-scroll-body {
+    padding: 12px 14px;
+    gap: 12px;
+  }
+
+  .modal-footer {
+    padding: 10px 14px calc(12px + env(safe-area-inset-bottom));
+    gap: 8px;
+  }
+
+  .modal-footer .primary-cta {
+    padding: 13px 10px;
+    font-size: 0.84rem;
+    letter-spacing: 0.8px;
+  }
+
+  .back-cta {
+    padding: 12px 12px;
+    font-size: 0.76rem;
+  }
+
+  .back-cta span {
+    display: none;
+  }
+
+  /* Tabs: icon on top, label below */
+  .lobby-tab {
+    flex-direction: column;
+    gap: 3px;
+    padding: 7px 4px;
+    font-size: 0.6rem;
+    letter-spacing: 0.4px;
+    line-height: 1.15;
+  }
+
+  .lobby-tab span {
+    font-size: 0.6rem;
+  }
+
+  /* Stepper */
+  .lobby-stepper {
+    gap: 8px;
+  }
+
+  .step-pre {
+    display: none;
+  }
+
+  .step-pill {
+    font-size: 0.68rem;
+    gap: 6px;
+  }
+
+  .step-num {
+    width: 24px;
+    height: 24px;
+  }
+
+  .step-line {
+    min-width: 16px;
+  }
+
+  /* Step 1 cards stack in one column */
+  .modal-setup .theme-picker-row,
+  .modal-setup .online-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .theme-card {
+    padding: 11px 12px;
+    gap: 8px;
+  }
+
+  .theme-card strong {
+    font-size: 0.76rem;
+  }
+
+  .theme-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  .modal-setup .mode-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .mode-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 11px;
+  }
+
+  .mode-pawns {
+    width: 42px;
+    height: 42px;
+    gap: 5px;
+    grid-template-columns: repeat(2, 11px);
+  }
+
+  .mode-pawns i {
+    width: 11px;
+    height: 11px;
+  }
+
+  .mode-card h4 {
+    font-size: 0.8rem;
+  }
+
+  .mode-card p {
+    font-size: 0.68rem;
+  }
+
+  /* Online tab */
+  .online-name-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .online-name-row label {
+    width: 100%;
+  }
+
+  .online-name-row input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .online-card {
+    padding: 12px;
+  }
+
+  .join-input-row input {
+    max-width: none;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .join-input-row .secondary-cta {
+    flex-shrink: 0;
+  }
+
+  .room-code-banner {
+    padding: 10px 12px;
+  }
+
+  .room-code-big {
+    font-size: 1.4rem;
+    letter-spacing: 4px;
+  }
+
+  .room-share-actions {
+    width: 100%;
+  }
+
+  .room-share-actions .icon-btn {
+    flex: 1;
+  }
+
+  #online-seats-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Skin picker */
+  .skin-grid,
+  .skin-grid-dice {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .skin-grid-map .skin-preview {
+    height: 80px;
+  }
+
+  /* Guide & victory */
+  .guide-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .victory-card {
+    padding: 18px 14px;
+    align-self: center;
+  }
+
+  .victory-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rank-row {
+    gap: 6px;
+    padding: 8px 10px;
+    font-size: 0.74rem;
+  }
+}
+
+/* Loading screen on phones: everything fits, lineup stays on one row */
+@media (max-width: 640px), (max-height: 720px) {
+  .loading-screen {
+    overflow-y: auto;
+    align-items: safe center;
+    padding: 16px 12px;
+  }
+
+  .ld-center {
+    gap: 8px;
+    margin: auto 0;
+  }
+
+  .ld-brand .ludoz-logo {
+    width: min(200px, 56vw);
+  }
+
+  .ld-sub {
+    font-size: 0.62rem;
+    letter-spacing: 3px;
+    margin-top: -2px;
+  }
+
+  .ld-stage,
+  .loading-screen[data-kind="boot"] .ld-stage {
+    width: 170px;
+    height: 170px;
+    margin: 2px 0;
+  }
+
+  .ld-cube3d {
+    --cube: 60px;
+  }
+
+  .ld-cube3d .cube-face {
+    border-radius: 9px;
+  }
+
+  .ld-orbit-pawn,
+  .loading-screen[data-kind="boot"] .ld-orbit-pawn {
+    width: 30px;
+    height: 30px;
+    margin: -15px 0 0 -15px;
+    transform: rotate(calc(var(--i) * 90deg)) translateY(-70px) rotate(calc(var(--i) * -90deg));
+  }
+
+  .ld-lineup {
+    flex-wrap: nowrap;
+    gap: 6px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ld-vs {
+    display: none;
+  }
+
+  .ld-fighter {
+    width: auto;
+    flex: 0 1 78px;
+    min-width: 0;
+    padding: 6px 4px;
+    border-radius: 11px;
+    gap: 3px;
+  }
+
+  .ld-fighter-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .ld-fighter-name {
+    font-size: 0.56rem;
+    letter-spacing: 0.2px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ld-fighter-role {
+    font-size: 0.56rem;
+  }
+
+  .ld-progress-wrap {
+    width: min(300px, 100%);
+    margin-top: 4px;
+  }
+
+  .ld-progress-meta {
+    font-size: 0.68rem;
+  }
+
+  .ld-tip {
+    font-size: 0.68rem;
+    line-height: 1.35;
+  }
+}
+
+/* Very short screens (landscape phones): drop the orbit, keep it compact */
+@media (max-height: 480px) {
+  .ld-stage,
+  .loading-screen[data-kind="boot"] .ld-stage {
+    width: 100px;
+    height: 100px;
+  }
+
+  .ld-orbit,
+  .ld-stage::before,
+  .ld-tip {
+    display: none;
   }
 }

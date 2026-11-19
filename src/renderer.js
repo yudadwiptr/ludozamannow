@@ -1063,7 +1063,7 @@ export class GameRenderer {
     this.dom.rollBtn.disabled = !canRoll;
     this.dom.rollBtn.style.setProperty('--hero-color', player.hero.color);
     let rollGlyph = 'dice';
-    let rollText = 'LEMPAR DADU';
+    let rollText = 'LEMPAR';
     if (!canRoll) {
       if (state.phase === 'SELECT_PAWN' && isMyTurn) {
         rollGlyph = 'pointer';

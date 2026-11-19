@@ -959,7 +959,7 @@ function renderHelpGuide(themeId) {
       <ul class="guide-list">
         <li><strong>Wajib angka 6 keluar markas.</strong> Semua pion mulai di markas; lempar <strong>6</strong> untuk keluar ke petak Start sekaligus dapat bonus giliran.</li>
         <li><strong>KO lawan.</strong> Mendarat di petak lawan (bukan safe zone) memulangkan pionnya — tiap hero punya animasi KO sendiri.</li>
-        <li><strong>Power hold.</strong> Tahan tombol <em>LEMPAR DADU</em> atau <kbd>SPACE</kbd> untuk atur tenaga, atau klik cepat.</li>
+        <li><strong>Power hold.</strong> Tahan tombol <em>LEMPAR</em> atau <kbd>SPACE</kbd> untuk atur tenaga, atau klik cepat.</li>
         <li><strong>Skill Overdrive.</strong> Isi energi sampai 100% lalu aktifkan sebelum melempar.</li>
         <li><strong>Multiplayer.</strong> Tab <em>Online</em> di Lobby: buat room, bagikan kode 4 huruf atau link.</li>
         <li><strong>Gaya sendiri.</strong> Tab <em>Arena &amp; Skin</em>: ganti peta, skin pion, dan skin dadu kapan saja.</li>
