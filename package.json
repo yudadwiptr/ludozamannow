@@ -1,0 +1,10 @@
+{
+  "name": "ludo-overdrive",
+  "version": "1.0.0",
+  "description": "Ludo Zaman Now — Neo-Arcade Tactical Ludo with Hero Skills, Special Dice & Dynamic Board Events",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node server.mjs"
+  }
+}
