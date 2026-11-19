@@ -58,8 +58,8 @@ export const THEMES = {
   nusantara: {
     id: 'nusantara',
     label: '🇮🇩 Nusantara Cyber',
-    brandTitle: 'LUDO NUSANTARA',
-    brandPill: 'CYBER 2099',
+    brandTitle: 'LUDOZ',
+    brandPill: 'LUDO ZAMAN NOW',
     boardBg: '#120d1d',
     boardStroke: '#523a28',
     tileBg: '#1a132b',
@@ -177,8 +177,8 @@ export const THEMES = {
   neo: {
     id: 'neo',
     label: '🌃 Neo-Arcade',
-    brandTitle: 'LUDO OVERDRIVE',
-    brandPill: 'ZAMAN NOW',
+    brandTitle: 'LUDOZ',
+    brandPill: 'LUDO ZAMAN NOW',
     boardBg: '#0c1122',
     boardStroke: '#243456',
     tileBg: '#131b32',

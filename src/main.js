@@ -16,6 +16,8 @@ const dom = {
   boardSvg: document.getElementById('board-svg'),
   pawnsLayer: document.getElementById('pawns-layer'),
   fxCanvas: document.getElementById('fx-canvas'),
+  tileInspector: document.getElementById('tile-inspector'),
+  tiltBtn: document.getElementById('tilt-btn'),
   leftCards: document.getElementById('left-cards'),
   rightCards: document.getElementById('right-cards'),
   roomBadge: document.getElementById('room-badge'),
@@ -330,6 +332,16 @@ dom.closeSetupBtn.addEventListener('click', () => {
 // Lobby Tabs, Mode, Theme & Local Roster Setup
 // ----------------------------------------------------------------------------
 
+function syncModalFooterCTA() {
+  const isLocal = lobbyState.tab === 'local';
+  dom.startMatchBtn.style.display = isLocal ? 'block' : 'none';
+  if (!isLocal && online.isConnected && online.isHost) {
+    dom.startOnlineBtn.style.display = 'block';
+  } else {
+    dom.startOnlineBtn.style.display = 'none';
+  }
+}
+
 function switchLobbyTab(tab) {
   lobbyState.tab = tab;
   document.querySelectorAll('.lobby-tab').forEach((btn) => {
@@ -337,7 +349,19 @@ function switchLobbyTab(tab) {
   });
   dom.tabLocal.classList.toggle('active', tab === 'local');
   dom.tabOnline.classList.toggle('active', tab === 'online');
+  syncModalFooterCTA();
 }
+
+// 2.5D Tabletop Perspective Toggle
+let isTilted = false;
+dom.tiltBtn?.addEventListener('click', () => {
+  isTilted = !isTilted;
+  sfx.click();
+  dom.boardStage.classList.toggle('tilt-3d', isTilted);
+  dom.tiltBtn.classList.toggle('active', isTilted);
+  dom.tiltBtn.textContent = isTilted ? '📐 2D' : '🧊 2.5D';
+  setTimeout(() => fx.resize(), 360);
+});
 
 document.querySelectorAll('.lobby-tab').forEach((btn) => {
   btn.addEventListener('click', () => {
@@ -369,7 +393,7 @@ document.querySelectorAll('.mode-card').forEach((card) => {
 function renderSetupModal() {
   const theme = getTheme(lobbyState.theme);
   const heroes = theme.heroes;
-  dom.setupModalTitle.textContent = `⚡ ${theme.brandTitle} ${theme.brandPill}`;
+  dom.setupModalTitle.textContent = `⚡ ${theme.brandTitle} — ${theme.brandPill}`;
 
   document.querySelectorAll('.theme-card').forEach((card) => {
     card.classList.toggle('selected', card.dataset.themePick === lobbyState.theme);
@@ -452,6 +476,7 @@ function renderOnlineRoom() {
   if (!online.isConnected || !online.room) {
     dom.onlineEntry.style.display = 'flex';
     dom.onlineRoomView.style.display = 'none';
+    syncModalFooterCTA();
     return;
   }
 
@@ -510,13 +535,12 @@ function renderOnlineRoom() {
 
   if (online.isHost) {
     const activeCount = room.seats.filter((s) => s.type !== 'off').length;
-    dom.startOnlineBtn.style.display = 'block';
     dom.startOnlineBtn.disabled = activeCount < 2;
     dom.onlineStatusMsg.textContent = 'Bagikan kode room ke temanmu, lalu klik MULAI MATCH ONLINE!';
   } else {
-    dom.startOnlineBtn.style.display = 'none';
     dom.onlineStatusMsg.textContent = '⏳ Terhubung! Menunggu Host memulai pertandingan...';
   }
+  syncModalFooterCTA();
 }
 
 dom.createRoomBtn.addEventListener('click', async () => {

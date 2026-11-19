@@ -1,4 +1,4 @@
-# ⚡ LUDO NUSANTARA / OVERDRIVE — Ludo Zaman Now
+# ⚡ LudoZ — Ludo Zaman Now
 
 Game web Ludo modern dengan **Hero Skill Overdrive**, **Tactical Dice Loadout**, **4 Efek KO Sinematik**, **Tema Nusantara Cyberpunk & Neo-Arcade**, **Dynamic Board Events**, dan **Multiplayer Online Real-Time** (tanpa dependency eksternal!).
 
