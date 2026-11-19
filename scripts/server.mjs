@@ -229,14 +229,15 @@ const server = http.createServer(async (req, res) => {
         if (room.clients.get(clientId) === res) {
           room.clients.delete(clientId);
           broadcast(room, 'room_update', serializeRoom(room));
-          // Give the host a short window to reconnect (page refresh, flaky Wi-Fi)
+          // Give the host a window to reconnect (refresh, flaky Wi-Fi, or a phone
+          // switching apps to share the room code). Longer while still in the lobby.
           if (clientId === room.hostId && rooms.get(room.code) === room) {
             clearTimeout(room.hostGraceTimer);
             room.hostGraceTimer = setTimeout(() => {
               if (!room.clients.has(room.hostId) && rooms.get(room.code) === room) {
                 closeRoom(room.code, room, 'host_disconnected');
               }
-            }, 8000);
+            }, room.started ? 30_000 : 120_000);
           }
         }
       });

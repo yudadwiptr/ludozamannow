@@ -196,7 +196,7 @@
           <div id="online-entry" class="online-box">
             <div class="online-name-row">
               <label for="online-name-input">Nama kamu</label>
-              <input id="online-name-input" type="text" maxlength="16" placeholder="Contoh: BangNeon" value="Player" />
+              <input id="online-name-input" type="text" maxlength="16" placeholder="Contoh: BangNeon" value="Player" autocomplete="nickname" enterkeyhint="next" />
             </div>
 
             <div class="online-split">
@@ -209,7 +209,7 @@
                 <h4 data-icon="key"><span>Gabung Room Teman</span></h4>
                 <p>Masukkan kode 4 huruf dari temanmu.</p>
                 <div class="join-input-row">
-                  <input id="join-code-input" type="text" maxlength="4" placeholder="ABCD" />
+                  <input id="join-code-input" type="text" maxlength="4" placeholder="ABCD" inputmode="text" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="go" />
                   <button id="join-room-btn" type="button" class="secondary-cta small-cta">GABUNG</button>
                 </div>
               </div>

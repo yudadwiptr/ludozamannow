@@ -4870,3 +4870,24 @@ body[data-theme="nusantara"] .brand-logo,
     margin-top: 8px;
   }
 }
+
+/* v8 — busy spinner for online buttons */
+.btn-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  display: inline-block;
+  animation: spinSlow 0.7s linear infinite;
+}
+
+.primary-cta:disabled .btn-spinner,
+.secondary-cta:disabled .btn-spinner {
+  opacity: 1;
+}
+
+.secondary-cta:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

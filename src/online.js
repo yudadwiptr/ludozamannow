@@ -4,7 +4,62 @@
 //   • Vercel / Static CDN: Automatic WebRTC Peer-to-Peer (PeerJS) across internet!
 // ============================================================================
 
+import { NET_CONFIG } from './net-config.js';
+
 const PEER_PREFIX = 'ludoz-v1-';
+const HOST_OPEN_TIMEOUT = 15000;
+const JOIN_TIMEOUT = 25000; // mobile networks + TURN negotiation can be slow
+
+const DEFAULT_ICE = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun.cloudflare.com:3478' },
+];
+
+let iceCache = null;
+/** STUN + optional TURN (needed for phones on 4G/5G carrier NAT). */
+async function getIceServers() {
+  if (iceCache) return iceCache;
+  const servers = [...DEFAULT_ICE, ...(NET_CONFIG.turn || [])];
+  if (NET_CONFIG.meteredApp && NET_CONFIG.meteredApiKey) {
+    try {
+      const url = `https://${NET_CONFIG.meteredApp}.metered.live/api/v1/turn/credentials?apiKey=${encodeURIComponent(NET_CONFIG.meteredApiKey)}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const list = await res.json();
+        if (Array.isArray(list)) servers.push(...list);
+      }
+    } catch {
+      /* TURN fetch failed — fall back to STUN only */
+    }
+  }
+  iceCache = servers;
+  return servers;
+}
+
+export function hasTurnConfigured() {
+  return Boolean((NET_CONFIG.meteredApp && NET_CONFIG.meteredApiKey) || NET_CONFIG.turn?.length);
+}
+
+async function peerOptions() {
+  return { debug: 0, config: { iceServers: await getIceServers() } };
+}
+
+/** Keep a PeerJS peer registered on the signaling server (phones drop it when backgrounded). */
+function keepPeerAlive(peer) {
+  const revive = () => {
+    if (peer.destroyed || !peer.disconnected) return;
+    try { peer.reconnect(); } catch { /* will retry on next trigger */ }
+  };
+  peer.on('disconnected', () => setTimeout(revive, 800));
+  const onVisible = () => { if (document.visibilityState === 'visible') revive(); };
+  document.addEventListener('visibilitychange', onVisible);
+  window.addEventListener('online', revive);
+  peer.on('close', () => {
+    document.removeEventListener('visibilitychange', onVisible);
+    window.removeEventListener('online', revive);
+  });
+}
 
 function randomRoomCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -195,10 +250,12 @@ export class OnlineClient {
     const hostPeerId = `${PEER_PREFIX}${code}`;
     const playerName = String(name || 'Host').trim().slice(0, 18) || 'Host';
 
+    const opts = await peerOptions();
     await new Promise((resolve, reject) => {
-      const peer = new Peer(hostPeerId, { debug: 0 });
+      const peer = new Peer(hostPeerId, opts);
       this.peer = peer;
-      const timer = setTimeout(() => reject(new Error('Timeout menyambung ke server P2P. Coba lagi!')), 10000);
+      keepPeerAlive(peer);
+      const timer = setTimeout(() => reject(new Error('Timeout menyambung ke server P2P. Cek internet lalu coba lagi.')), HOST_OPEN_TIMEOUT);
 
       peer.on('open', () => {
         clearTimeout(timer);
@@ -284,22 +341,31 @@ export class OnlineClient {
     await this.disconnect(false);
     const Peer = await loadPeerJS();
     const hostPeerId = `${PEER_PREFIX}${code}`;
+    const opts = await peerOptions();
 
     return new Promise((resolve, reject) => {
-      const peer = new Peer(undefined, { debug: 0 });
+      const peer = new Peer(undefined, opts);
       this.peer = peer;
+      keepPeerAlive(peer);
       let settled = false;
+      let reachedHost = false;
       const timer = setTimeout(() => {
         if (!settled) {
           settled = true;
           this.disconnect(false);
-          reject(new Error(`Room "${code}" tidak ditemukan atau Host sedang offline!`));
+          reject(new Error(reachedHost
+            ? `Room "${code}" ketemu, tapi koneksi ke host gagal. Kalau pakai data seluler, coba Wi-Fi atau minta host tetap membuka game.`
+            : `Room "${code}" tidak ditemukan atau host sedang offline. Pastikan host tetap membuka game.`));
         }
-      }, 10000);
+      }, JOIN_TIMEOUT);
 
       peer.on('open', () => {
         const conn = peer.connect(hostPeerId, { reliable: true });
         this.hostConn = conn;
+        // PeerJS reports ICE progress: "checking" means the host answered (room exists)
+        conn.on('iceStateChanged', (state) => {
+          if (state === 'checking' || state === 'connected') reachedHost = true;
+        });
 
         conn.on('open', () => {
           conn.send({ cmd: 'join', name });
@@ -354,11 +420,15 @@ export class OnlineClient {
       });
 
       peer.on('error', (err) => {
-        if (!settled) {
-          settled = true;
-          clearTimeout(timer);
-          reject(new Error(`Room "${code}" tidak ditemukan (${err.type || 'offline'}).`));
-        }
+        if (settled) return;
+        // Transient signaling hiccups on mobile: keep waiting for the timeout
+        if (err.type === 'network' || err.type === 'disconnected' || err.type === 'server-error') return;
+        settled = true;
+        clearTimeout(timer);
+        this.disconnect(false);
+        reject(new Error(err.type === 'peer-unavailable'
+          ? `Room "${code}" tidak ditemukan. Cek lagi kodenya, dan pastikan host masih membuka game.`
+          : `Gagal terhubung ke room "${code}" (${err.type || 'offline'}).`));
       });
     });
   }

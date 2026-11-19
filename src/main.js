@@ -178,7 +178,10 @@ function startPreviewMatch() {
   });
 }
 
-window.addEventListener('pagehide', () => online.leaveOnUnload());
+// Real unload only: phones fire pagehide (persisted) when backgrounding into bfcache
+window.addEventListener('pagehide', (e) => {
+  if (!e.persisted) online.leaveOnUnload();
+});
 
 function closeAllModals() {
   dom.setupModal.classList.remove('open');
@@ -241,7 +244,7 @@ online = new OnlineClient({
   },
   onRoomClosed: (reason) => {
     const msg = reason === 'host_disconnected'
-      ? 'Host terputus dari room. Permainan selesai.'
+      ? 'Koneksi ke host terputus. Permainan selesai.'
       : 'Host keluar dari room. Permainan selesai.';
     startPreviewMatch();
     dom.battleLog.innerHTML = '';
@@ -843,10 +846,36 @@ function renderOnlineRoom() {
   syncModalFooterCTA();
 }
 
-dom.createRoomBtn.addEventListener('click', async () => {
+let onlineBusy = false;
+
+/** Lock both online buttons while a create/join attempt is running (no double taps). */
+async function withOnlineBusy(btn, busyLabel, task) {
+  if (onlineBusy) return;
+  onlineBusy = true;
+  const original = btn.innerHTML;
+  dom.createRoomBtn.disabled = true;
+  dom.joinRoomBtn.disabled = true;
+  btn.innerHTML = `<span class="btn-spinner"></span><span>${busyLabel}</span>`;
   dom.onlineError.textContent = '';
-  sfx.click();
+  dom.onlineError.classList.add('info');
+  dom.onlineError.textContent = busyLabel === 'MEMBUAT...' ? 'Menyiapkan room...' : 'Menghubungkan ke host... (bisa sampai ~20 detik di data seluler)';
   try {
+    await task();
+    dom.onlineError.textContent = '';
+  } catch (err) {
+    dom.onlineError.textContent = err.message;
+  } finally {
+    dom.onlineError.classList.remove('info');
+    btn.innerHTML = original;
+    dom.createRoomBtn.disabled = false;
+    dom.joinRoomBtn.disabled = false;
+    onlineBusy = false;
+  }
+}
+
+dom.createRoomBtn.addEventListener('click', () => {
+  sfx.click();
+  withOnlineBusy(dom.createRoomBtn, 'MEMBUAT...', async () => {
     const name = dom.onlineNameInput.value.trim() || 'Host';
     await online.createRoom({
       name,
@@ -854,26 +883,34 @@ dom.createRoomBtn.addEventListener('click', async () => {
       theme: lobbyState.theme,
     });
     renderOnlineRoom();
-  } catch (err) {
-    dom.onlineError.textContent = err.message;
-  }
+  });
 });
 
-dom.joinRoomBtn.addEventListener('click', async () => {
-  dom.onlineError.textContent = '';
+function joinFromInput() {
   sfx.click();
-  const code = dom.joinCodeInput.value.trim().toUpperCase();
+  const code = dom.joinCodeInput.value.replace(/s+/g, '').toUpperCase();
+  dom.joinCodeInput.value = code;
   if (code.length !== 4) {
     dom.onlineError.textContent = 'Masukkan 4 huruf/angka kode room.';
     return;
   }
-  try {
+  dom.joinCodeInput.blur(); // close the phone keyboard so the status is visible
+  withOnlineBusy(dom.joinRoomBtn, '...', async () => {
     const name = dom.onlineNameInput.value.trim() || 'Pemain';
     await online.joinRoom({ code, name });
     renderOnlineRoom();
-  } catch (err) {
-    dom.onlineError.textContent = err.message;
+  });
+}
+
+dom.joinRoomBtn.addEventListener('click', joinFromInput);
+dom.joinCodeInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    joinFromInput();
   }
+});
+dom.joinCodeInput.addEventListener('input', () => {
+  dom.joinCodeInput.value = dom.joinCodeInput.value.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 4);
 });
 
 dom.copyLinkBtn.addEventListener('click', async () => {
