@@ -1,5 +1,5 @@
 // ============================================================================
-// LUDO OVERDRIVE — Static Server + Real-Time Online Multiplayer (SSE + REST)
+// LudoZ — Local Static Server + Real-Time LAN/Local Multiplayer (SSE + REST)
 // ============================================================================
 
 import http from 'node:http';
@@ -9,7 +9,8 @@ import os from 'node:os';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const ROOT_DIR = path.resolve(path.dirname(__filename), '..');
 const PORT = Number(process.env.PORT) || 5173;
 
 const MIME = {
@@ -22,7 +23,6 @@ const MIME = {
   '.png': 'image/png',
 };
 
-// In-memory multiplayer rooms
 const rooms = new Map();
 
 function randomRoomCode() {
@@ -60,9 +60,7 @@ function readJsonBody(req) {
     let raw = '';
     req.on('data', (chunk) => {
       raw += chunk;
-      if (raw.length > 64 * 1024) {
-        reject(new Error('Body too large'));
-      }
+      if (raw.length > 64 * 1024) reject(new Error('Body too large'));
     });
     req.on('end', () => {
       if (!raw) return resolve({});
@@ -86,7 +84,7 @@ function serializeRoom(room) {
     hostId: room.hostId,
     seats: room.seats.map((s, idx) => ({
       seatIndex: idx,
-      type: s.type, // 'human' | 'ai' | 'off'
+      type: s.type,
       clientId: s.clientId || null,
       name: s.name || null,
       connected: s.clientId ? room.clients.has(s.clientId) : false,
@@ -100,12 +98,11 @@ function broadcast(room, eventName, payload) {
     try {
       res.write(frame);
     } catch {
-      // Ignore broken pipes; cleaned up on close
+      // Ignore broken pipes
     }
   }
 }
 
-// Clean up idle rooms older than 2 hours
 setInterval(() => {
   const cutoff = Date.now() - 2 * 60 * 60 * 1000;
   for (const [code, room] of rooms.entries()) {
@@ -118,10 +115,6 @@ setInterval(() => {
 const server = http.createServer(async (req, res) => {
   const urlObj = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const pathname = urlObj.pathname;
-
-  // --------------------------------------------------------------------------
-  // API Routes for Real-Time Online Multiplayer
-  // --------------------------------------------------------------------------
 
   if (req.method === 'GET' && pathname === '/api/info') {
     return sendJson(res, 200, {
@@ -172,17 +165,10 @@ const server = http.createServer(async (req, res) => {
       const code = String(body.code || '').trim().toUpperCase();
       const playerName = String(body.name || 'Pemain').trim().slice(0, 18) || 'Pemain';
       const room = rooms.get(code);
-      if (!room) {
-        return sendJson(res, 404, { error: `Room "${code}" tidak ditemukan!` });
-      }
-      if (room.started) {
-        return sendJson(res, 409, { error: 'Pertandingan di room ini sudah dimulai!' });
-      }
-      // Find first non-human seat
+      if (!room) return sendJson(res, 404, { error: `Room "${code}" tidak ditemukan!` });
+      if (room.started) return sendJson(res, 409, { error: 'Pertandingan di room ini sudah dimulai!' });
       const freeSeatIdx = room.seats.findIndex((s) => !s.clientId);
-      if (freeSeatIdx === -1) {
-        return sendJson(res, 409, { error: 'Room sudah penuh (4/4 pemain)!' });
-      }
+      if (freeSeatIdx === -1) return sendJson(res, 409, { error: 'Room sudah penuh (4/4 pemain)!' });
       const clientId = crypto.randomUUID();
       room.seats[freeSeatIdx] = { type: 'human', clientId, name: playerName };
       room.lastActivity = Date.now();
@@ -199,15 +185,12 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // Room-scoped endpoints: /api/rooms/:code/...
   const roomMatch = pathname.match(/^\/api\/rooms\/([A-Z0-9]{4})\/(events|config|start|action|leave)$/i);
   if (roomMatch) {
     const code = roomMatch[1].toUpperCase();
     const sub = roomMatch[2];
     const room = rooms.get(code);
-    if (!room) {
-      return sendJson(res, 404, { error: 'Room tidak ditemukan' });
-    }
+    if (!room) return sendJson(res, 404, { error: 'Room tidak ditemukan' });
     room.lastActivity = Date.now();
 
     if (req.method === 'GET' && sub === 'events') {
@@ -219,8 +202,6 @@ const server = http.createServer(async (req, res) => {
       });
       res.write(`retry: 2000\n\n`);
       room.clients.set(clientId, res);
-
-      // Push initial state immediately & notify others of connection
       broadcast(room, 'room_update', serializeRoom(room));
 
       const heartbeat = setInterval(() => {
@@ -270,9 +251,7 @@ const server = http.createServer(async (req, res) => {
           return sendJson(res, 403, { error: 'Hanya Host yang bisa memulai match.' });
         }
         const activeCount = room.seats.filter((s) => s.type !== 'off').length;
-        if (activeCount < 2) {
-          return sendJson(res, 400, { error: 'Minimal 2 pemain aktif!' });
-        }
+        if (activeCount < 2) return sendJson(res, 400, { error: 'Minimal 2 pemain aktif!' });
         room.started = true;
         room.seq = 0;
         room.matchSeed = Math.floor(Math.random() * 2_000_000_000) + 1;
@@ -288,9 +267,7 @@ const server = http.createServer(async (req, res) => {
       try {
         const body = await readJsonBody(req);
         const senderSeat = room.seats.findIndex((s) => s.clientId === body.clientId);
-        if (senderSeat === -1) {
-          return sendJson(res, 403, { error: 'Kamu bukan anggota room ini.' });
-        }
+        if (senderSeat === -1) return sendJson(res, 403, { error: 'Kamu bukan anggota room ini.' });
         room.seq += 1;
         const actionMsg = {
           seq: room.seq,
@@ -310,9 +287,7 @@ const server = http.createServer(async (req, res) => {
       try {
         const body = await readJsonBody(req);
         const idx = room.seats.findIndex((s) => s.clientId === body.clientId);
-        if (idx !== -1) {
-          room.seats[idx] = { type: 'ai', clientId: null, name: null };
-        }
+        if (idx !== -1) room.seats[idx] = { type: 'ai', clientId: null, name: null };
         room.clients.delete(body.clientId);
         broadcast(room, 'room_update', serializeRoom(room));
         return sendJson(res, 200, { ok: true });
@@ -322,14 +297,10 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // --------------------------------------------------------------------------
-  // Static Files
-  // --------------------------------------------------------------------------
-
   const relPath = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
-  const fullPath = path.resolve(__dirname, relPath);
+  const fullPath = path.resolve(ROOT_DIR, relPath);
 
-  if (!fullPath.startsWith(__dirname)) {
+  if (!fullPath.startsWith(ROOT_DIR)) {
     res.writeHead(403);
     res.end('Forbidden');
     return;
@@ -351,7 +322,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`LUDO OVERDRIVE running at http://localhost:${PORT}`);
+  console.log(`LudoZ - Ludo Zaman Now running at http://localhost:${PORT}`);
   const lans = getLanUrls();
   if (lans.length > 0) {
     console.log(`LAN Multiplayer URL: ${lans[0]}`);

@@ -1,6 +1,43 @@
 // ============================================================================
-// LUDO OVERDRIVE — Real-Time Online Multiplayer Client (SSE + REST)
+// LudoZ — Dual-Transport Real-Time Online Multiplayer
+//   • Local / Node Server: Built-in SSE + REST (/api/rooms/*)
+//   • Vercel / Static CDN: Automatic WebRTC Peer-to-Peer (PeerJS) across internet!
 // ============================================================================
+
+const PEER_PREFIX = 'ludoz-v1-';
+
+function randomRoomCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 4; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
+function randomId() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return 'c_' + Math.random().toString(36).slice(2, 11) + Date.now().toString(36);
+}
+
+let peerJsPromise = null;
+function loadPeerJS() {
+  if (window.Peer) return Promise.resolve(window.Peer);
+  if (peerJsPromise) return peerJsPromise;
+
+  const loadScript = (src) => new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    s.onload = () => (window.Peer ? resolve(window.Peer) : reject(new Error('PeerJS unavailable')));
+    s.onerror = () => reject(new Error('Gagal memuat library PeerJS'));
+    document.head.appendChild(s);
+  });
+
+  peerJsPromise = loadScript('https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js')
+    .catch(() => loadScript('https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js'));
+  return peerJsPromise;
+}
 
 export class OnlineClient {
   constructor({ onRoomUpdate, onMatchStart, onGameAction, onConnectionChange }) {
@@ -9,11 +46,20 @@ export class OnlineClient {
     this.onGameAction = onGameAction;
     this.onConnectionChange = onConnectionChange;
 
+    this.transport = 'auto'; // 'sse' | 'webrtc'
     this.roomCode = null;
     this.clientId = null;
     this.seatIndex = null;
     this.room = null;
+
+    // SSE state
     this.es = null;
+
+    // WebRTC P2P state
+    this.peer = null;
+    this.hostConn = null; // Guest -> Host connection
+    this.guestConns = new Map(); // Host: clientId -> DataConnection
+    this._p2pSeq = 0;
   }
 
   get isConnected() {
@@ -26,39 +72,69 @@ export class OnlineClient {
 
   async getServerInfo() {
     try {
-      const res = await fetch('/api/info');
-      if (!res.ok) return { lanUrls: [] };
-      return await res.json();
+      const res = await fetch('/api/info', { cache: 'no-store' });
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const data = await res.json();
+        this.transport = 'sse';
+        return { ...data, transport: 'sse' };
+      }
     } catch {
-      return { lanUrls: [] };
+      // Static hosting (e.g. Vercel) -> use WebRTC P2P!
     }
+    this.transport = 'webrtc';
+    return { lanUrls: [], transport: 'webrtc' };
   }
 
+  async _ensureTransport() {
+    if (this.transport === 'auto') {
+      await this.getServerInfo();
+    }
+    return this.transport;
+  }
+
+  // --------------------------------------------------------------------------
+  // Create & Join Room (Auto-Selects SSE Server or WebRTC P2P)
+  // --------------------------------------------------------------------------
+
   async createRoom({ name, mode, theme }) {
-    const res = await fetch('/api/rooms/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, mode, theme }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Gagal membuat room');
-    this._attachSession(data);
-    return data;
+    const modeTransport = await this._ensureTransport();
+    if (modeTransport === 'sse') {
+      const res = await fetch('/api/rooms/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, mode, theme }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal membuat room');
+      this._attachSSESession(data);
+      return data;
+    }
+    return this._createWebRTCRoom({ name, mode, theme });
   }
 
   async joinRoom({ code, name }) {
-    const res = await fetch('/api/rooms/join', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, name }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Gagal bergabung ke room');
-    this._attachSession(data);
-    return data;
+    const modeTransport = await this._ensureTransport();
+    const cleanCode = String(code || '').trim().toUpperCase();
+    if (modeTransport === 'sse') {
+      const res = await fetch('/api/rooms/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: cleanCode, name }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal bergabung ke room');
+      this._attachSSESession(data);
+      return data;
+    }
+    return this._joinWebRTCRoom({ code: cleanCode, name });
   }
 
-  _attachSession(data) {
+  // --------------------------------------------------------------------------
+  // Transport A: Built-in Local SSE + REST Server
+  // --------------------------------------------------------------------------
+
+  _attachSSESession(data) {
     this.disconnect(false);
     this.room = data.room;
     this.roomCode = data.room.code;
@@ -68,97 +144,337 @@ export class OnlineClient {
     const url = `/api/rooms/${this.roomCode}/events?clientId=${encodeURIComponent(this.clientId)}`;
     this.es = new EventSource(url);
 
-    this.es.addEventListener('open', () => {
-      if (this.onConnectionChange) this.onConnectionChange(true);
-    });
-
-    this.es.addEventListener('error', () => {
-      if (this.onConnectionChange) this.onConnectionChange(false);
-    });
+    this.es.addEventListener('open', () => this.onConnectionChange?.(true));
+    this.es.addEventListener('error', () => this.onConnectionChange?.(false));
 
     this.es.addEventListener('room_update', (ev) => {
       try {
         this.room = JSON.parse(ev.data);
-        if (this.onRoomUpdate) this.onRoomUpdate(this.room);
-      } catch {
-        // Ignore malformed frame
-      }
+        this.onRoomUpdate?.(this.room);
+      } catch {}
     });
 
     this.es.addEventListener('match_start', (ev) => {
       try {
         const msg = JSON.parse(ev.data);
         this.room = msg.room;
-        if (this.onMatchStart) this.onMatchStart(msg);
-      } catch {
-        // Ignore
-      }
+        this.onMatchStart?.(msg);
+      } catch {}
     });
 
     this.es.addEventListener('game_action', (ev) => {
       try {
-        const action = JSON.parse(ev.data);
-        if (this.onGameAction) this.onGameAction(action);
-      } catch {
-        // Ignore
-      }
+        this.onGameAction?.(JSON.parse(ev.data));
+      } catch {}
     });
   }
 
-  async updateConfig(patch) {
-    if (!this.isConnected) return;
-    await fetch(`/api/rooms/${this.roomCode}/config`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientId: this.clientId, ...patch }),
+  // --------------------------------------------------------------------------
+  // Transport B: Serverless Global Internet WebRTC P2P (PeerJS for Vercel!)
+  // --------------------------------------------------------------------------
+
+  async _createWebRTCRoom({ name, mode, theme }) {
+    await this.disconnect(false);
+    const Peer = await loadPeerJS();
+    const code = randomRoomCode();
+    const clientId = randomId();
+    const hostPeerId = `${PEER_PREFIX}${code}`;
+    const playerName = String(name || 'Host').trim().slice(0, 18) || 'Host';
+
+    await new Promise((resolve, reject) => {
+      const peer = new Peer(hostPeerId, { debug: 0 });
+      this.peer = peer;
+      const timer = setTimeout(() => reject(new Error('Timeout menyambung ke server P2P. Coba lagi!')), 10000);
+
+      peer.on('open', () => {
+        clearTimeout(timer);
+        resolve();
+      });
+      peer.on('error', (err) => {
+        clearTimeout(timer);
+        reject(new Error(`Koneksi P2P gagal (${err.type || err.message})`));
+      });
     });
+
+    this.roomCode = code;
+    this.clientId = clientId;
+    this.seatIndex = 0;
+    this._p2pSeq = 0;
+    this.guestConns = new Map();
+    this.room = {
+      code,
+      mode: mode === 'classic' ? 'classic' : 'blitz',
+      theme: theme === 'neo' ? 'neo' : 'nusantara',
+      started: false,
+      matchSeed: null,
+      hostId: clientId,
+      seats: [
+        { seatIndex: 0, type: 'human', clientId, name: playerName, connected: true },
+        { seatIndex: 1, type: 'ai', clientId: null, name: null, connected: false },
+        { seatIndex: 2, type: 'ai', clientId: null, name: null, connected: false },
+        { seatIndex: 3, type: 'ai', clientId: null, name: null, connected: false },
+      ],
+    };
+
+    // Accept incoming Guest DataChannels
+    this.peer.on('connection', (conn) => {
+      let boundClientId = null;
+
+      conn.on('data', (msg) => {
+        if (!msg || typeof msg !== 'object') return;
+        if (msg.cmd === 'join') {
+          if (this.room.started) {
+            conn.send({ event: 'join_error', error: 'Pertandingan di room ini sudah dimulai!' });
+            return;
+          }
+          const freeIdx = this.room.seats.findIndex((s) => !s.clientId);
+          if (freeIdx === -1) {
+            conn.send({ event: 'join_error', error: 'Room sudah penuh (4/4 pemain)!' });
+            return;
+          }
+          boundClientId = randomId();
+          const guestName = String(msg.name || 'Pemain').trim().slice(0, 18) || 'Pemain';
+          this.room.seats[freeIdx] = {
+            seatIndex: freeIdx,
+            type: 'human',
+            clientId: boundClientId,
+            name: guestName,
+            connected: true,
+          };
+          this.guestConns.set(boundClientId, conn);
+          conn.send({
+            event: 'joined',
+            room: this.room,
+            clientId: boundClientId,
+            seatIndex: freeIdx,
+          });
+          this._p2pBroadcast('room_update', this.room);
+        } else if (msg.cmd === 'action' && boundClientId) {
+          this._p2pRelayAction(boundClientId, msg.type, msg.payload || {});
+        } else if (msg.cmd === 'leave' && boundClientId) {
+          this._p2pRemoveGuest(boundClientId);
+        }
+      });
+
+      conn.on('close', () => {
+        if (boundClientId) this._p2pRemoveGuest(boundClientId);
+      });
+    });
+
+    this.onConnectionChange?.(true);
+    this.onRoomUpdate?.(this.room);
+    return { room: this.room, clientId, seatIndex: 0 };
+  }
+
+  async _joinWebRTCRoom({ code, name }) {
+    await this.disconnect(false);
+    const Peer = await loadPeerJS();
+    const hostPeerId = `${PEER_PREFIX}${code}`;
+
+    return new Promise((resolve, reject) => {
+      const peer = new Peer(undefined, { debug: 0 });
+      this.peer = peer;
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          this.disconnect(false);
+          reject(new Error(`Room "${code}" tidak ditemukan atau Host sedang offline!`));
+        }
+      }, 10000);
+
+      peer.on('open', () => {
+        const conn = peer.connect(hostPeerId, { reliable: true });
+        this.hostConn = conn;
+
+        conn.on('open', () => {
+          conn.send({ cmd: 'join', name });
+        });
+
+        conn.on('data', (msg) => {
+          if (!msg || typeof msg !== 'object') return;
+          if (msg.event === 'join_error' && !settled) {
+            settled = true;
+            clearTimeout(timer);
+            this.disconnect(false);
+            reject(new Error(msg.error || 'Gagal gabung room'));
+          } else if (msg.event === 'joined' && !settled) {
+            settled = true;
+            clearTimeout(timer);
+            this.room = msg.room;
+            this.roomCode = msg.room.code;
+            this.clientId = msg.clientId;
+            this.seatIndex = msg.seatIndex;
+            this.onConnectionChange?.(true);
+            this.onRoomUpdate?.(this.room);
+            resolve({ room: msg.room, clientId: msg.clientId, seatIndex: msg.seatIndex });
+          } else if (msg.event === 'room_update') {
+            this.room = msg.payload;
+            this.onRoomUpdate?.(this.room);
+          } else if (msg.event === 'match_start') {
+            this.room = msg.payload.room;
+            this.onMatchStart?.(msg.payload);
+          } else if (msg.event === 'game_action') {
+            this.onGameAction?.(msg.payload);
+          }
+        });
+
+        conn.on('close', () => {
+          this.onConnectionChange?.(false);
+        });
+
+        conn.on('error', () => {
+          if (!settled) {
+            settled = true;
+            clearTimeout(timer);
+            reject(new Error(`Tidak bisa terhubung ke Room "${code}".`));
+          }
+        });
+      });
+
+      peer.on('error', (err) => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          reject(new Error(`Room "${code}" tidak ditemukan (${err.type || 'offline'}).`));
+        }
+      });
+    });
+  }
+
+  _p2pRemoveGuest(clientId) {
+    this.guestConns.delete(clientId);
+    if (!this.room) return;
+    const idx = this.room.seats.findIndex((s) => s.clientId === clientId);
+    if (idx !== -1) {
+      this.room.seats[idx] = { seatIndex: idx, type: 'ai', clientId: null, name: null, connected: false };
+      this._p2pBroadcast('room_update', this.room);
+    }
+  }
+
+  _p2pBroadcast(event, payload) {
+    for (const conn of this.guestConns.values()) {
+      try {
+        if (conn.open) conn.send({ event, payload });
+      } catch {}
+    }
+    if (event === 'room_update') this.onRoomUpdate?.(payload);
+    if (event === 'match_start') this.onMatchStart?.(payload);
+    if (event === 'game_action') this.onGameAction?.(payload);
+  }
+
+  _p2pRelayAction(senderClientId, type, payload) {
+    if (!this.room) return;
+    const senderSeat = this.room.seats.findIndex((s) => s.clientId === senderClientId);
+    if (senderSeat === -1) return;
+    this._p2pSeq += 1;
+    this._p2pBroadcast('game_action', {
+      seq: this._p2pSeq,
+      senderSeat,
+      isHost: senderClientId === this.room.hostId,
+      type,
+      payload,
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // Shared Room Config, Start, Action & Disconnect API
+  // --------------------------------------------------------------------------
+
+  async updateConfig(patch) {
+    if (!this.isConnected || !this.isHost) return;
+    if (this.transport === 'sse') {
+      await fetch(`/api/rooms/${this.roomCode}/config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId: this.clientId, ...patch }),
+      });
+      return;
+    }
+    // WebRTC Host local config update + broadcast
+    if (patch.mode === 'blitz' || patch.mode === 'classic') this.room.mode = patch.mode;
+    if (patch.theme === 'nusantara' || patch.theme === 'neo') this.room.theme = patch.theme;
+    if (typeof patch.toggleSeat === 'number' && patch.toggleSeat >= 0 && patch.toggleSeat < 4) {
+      const seat = this.room.seats[patch.toggleSeat];
+      if (!seat.clientId) seat.type = seat.type === 'ai' ? 'off' : 'ai';
+    }
+    this._p2pBroadcast('room_update', this.room);
   }
 
   async startMatch() {
-    if (!this.isConnected) return;
-    const res = await fetch(`/api/rooms/${this.roomCode}/start`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientId: this.clientId }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Gagal memulai match online');
-    return data;
+    if (!this.isConnected || !this.isHost) return;
+    if (this.transport === 'sse') {
+      const res = await fetch(`/api/rooms/${this.roomCode}/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId: this.clientId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal memulai match online');
+      return data;
+    }
+    const activeCount = this.room.seats.filter((s) => s.type !== 'off').length;
+    if (activeCount < 2) throw new Error('Minimal 2 pemain aktif!');
+    this.room.started = true;
+    this._p2pSeq = 0;
+    this.room.matchSeed = Math.floor(Math.random() * 2_000_000_000) + 1;
+    this._p2pBroadcast('match_start', { room: this.room, matchSeed: this.room.matchSeed });
+    return { ok: true, matchSeed: this.room.matchSeed };
   }
 
   async sendAction(type, payload = {}) {
     if (!this.isConnected) return;
-    await fetch(`/api/rooms/${this.roomCode}/action`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        clientId: this.clientId,
-        type,
-        payload,
-      }),
-    });
+    if (this.transport === 'sse') {
+      await fetch(`/api/rooms/${this.roomCode}/action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId: this.clientId, type, payload }),
+      });
+      return;
+    }
+    if (this.isHost) {
+      this._p2pRelayAction(this.clientId, type, payload);
+    } else if (this.hostConn?.open) {
+      this.hostConn.send({ cmd: 'action', type, payload });
+    }
   }
 
   async disconnect(notifyServer = true) {
     if (notifyServer && this.roomCode && this.clientId) {
-      try {
-        await fetch(`/api/rooms/${this.roomCode}/leave`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ clientId: this.clientId }),
-        });
-      } catch {
-        // Ignore network errors on leave
+      if (this.transport === 'sse') {
+        try {
+          await fetch(`/api/rooms/${this.roomCode}/leave`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ clientId: this.clientId }),
+          });
+        } catch {}
+      } else if (this.hostConn?.open) {
+        try {
+          this.hostConn.send({ cmd: 'leave' });
+        } catch {}
       }
     }
     if (this.es) {
       this.es.close();
       this.es = null;
     }
+    if (this.hostConn) {
+      try { this.hostConn.close(); } catch {}
+      this.hostConn = null;
+    }
+    for (const c of this.guestConns.values()) {
+      try { c.close(); } catch {}
+    }
+    this.guestConns.clear();
+    if (this.peer) {
+      try { this.peer.destroy(); } catch {}
+      this.peer = null;
+    }
     this.roomCode = null;
     this.clientId = null;
     this.seatIndex = null;
     this.room = null;
-    if (this.onConnectionChange) this.onConnectionChange(false);
+    this.onConnectionChange?.(false);
   }
 }

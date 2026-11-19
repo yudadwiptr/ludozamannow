@@ -1,10 +1,10 @@
 {
-  "name": "ludo-overdrive",
+  "name": "ludoz-ludo-zaman-now",
   "version": "1.0.0",
-  "description": "Ludo Zaman Now — Neo-Arcade Tactical Ludo with Hero Skills, Special Dice & Dynamic Board Events",
+  "description": "LudoZ - Ludo Zaman Now: Tactical Ludo with Nusantara Cyberpunk theme, Hero Overdrive Skills, Special Dice, KO Finishers & Real-Time Online Multiplayer",
   "type": "module",
   "scripts": {
-    "start": "node server.mjs",
-    "dev": "node server.mjs"
+    "start": "node scripts/server.mjs",
+    "dev": "node scripts/server.mjs"
   }
 }

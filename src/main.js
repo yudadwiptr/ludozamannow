@@ -487,9 +487,14 @@ function renderOnlineRoom() {
   const heroes = getHeroesForTheme(room.theme);
   dom.roomCodeDisplay.textContent = room.code;
 
-  const baseLan = lobbyState.lanUrls[0] || window.location.origin;
-  const inviteUrl = `${baseLan}/?room=${room.code}`;
-  dom.lanUrlHint.innerHTML = `🔗 Link 1 Wi-Fi / LAN: <code>${inviteUrl}</code>`;
+  const baseUrl = window.location.hostname === 'localhost' && lobbyState.lanUrls[0]
+    ? lobbyState.lanUrls[0]
+    : window.location.origin;
+  const inviteUrl = `${baseUrl}/?room=${room.code}`;
+  const hintPrefix = online.transport === 'webrtc'
+    ? '🌐 Link Mabar Online (WebRTC — Bisa Beda Wi-Fi/Kota!)'
+    : '🔗 Link 1 Wi-Fi / LAN';
+  dom.lanUrlHint.innerHTML = `${hintPrefix}: <code>${inviteUrl}</code>`;
 
   dom.onlineSeatsGrid.innerHTML = room.seats.map((seat) => {
     const h = heroes[seat.seatIndex];
