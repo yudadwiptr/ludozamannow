@@ -47,7 +47,7 @@ const P = {
   hourglass: '<path d="M6.5 3h11M6.5 21h11"/><path d="M7.5 3v3.5L12 12l4.5-5.5V3M7.5 21v-3.5L12 12l4.5 5.5V21"/>',
   pointer: '<path d="M9 11V5a1.5 1.5 0 0 1 3 0v5"/><path d="M12 10V8.5a1.5 1.5 0 0 1 3 0V11"/><path d="M15 10.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.9-2.6L3.6 15a1.6 1.6 0 0 1 2.6-1.8L9 15.5"/>',
   magnet: '<path d="M5 4h4v8a3 3 0 0 0 6 0V4h4v8a7 7 0 0 1-14 0z"/><path d="M5 8h4M15 8h4"/>',
-  mirror: '<rect x="3" y="6" width="8" height="12" rx="2"/><rect x="13" y="6" width="8" height="12" rx="2" stroke-dasharray="2.4 2"/><circle cx="7" cy="12" r="1.3" fill="currentColor"/><circle cx="17" cy="12" r="1.3" fill="currentColor"/>',
+  mirror: '<rect x="3" y="6" width="8" height="12" rx="2"/><rect x="13" y="6" width="8" height="12" rx="2" opacity="0.55"/><circle cx="7" cy="12" r="1.3" fill="currentColor"/><circle cx="17" cy="12" r="1.3" fill="currentColor"/>',
   slime: '<path d="M12 3.5c3.6 4.4 6 7.6 6 10.5a6 6 0 0 1-12 0c0-2.9 2.4-6.1 6-10.5z"/><path d="M9.3 14.5a2.8 2.8 0 0 0 2.4 2.6"/>',
   flame: '<path d="M12 21a6.5 6.5 0 0 0 6.5-6.5c0-4.3-3.2-6.4-4.5-11-2.6 2-3.4 4.6-3.2 6.7C9.7 9.4 8.8 8.4 8.6 7 6.6 9 5.5 11.4 5.5 14.5A6.5 6.5 0 0 0 12 21z"/><path d="M12 21a2.8 2.8 0 0 1-2.8-2.8c0-1.9 1.7-2.7 2.8-4.7 1.1 2 2.8 2.8 2.8 4.7A2.8 2.8 0 0 1 12 21z"/>',
   map: '<path d="M3.5 6.5l5.5-2.5 6 2.5 5.5-2.5v13.5l-5.5 2.5-6-2.5-5.5 2.5z"/><path d="M9 4v13.5M15 6.5V20"/>',

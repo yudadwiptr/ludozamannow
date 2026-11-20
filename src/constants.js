@@ -215,7 +215,7 @@ export const THEMES = {
           <polygon points="20,33 28,36 22,39" fill="#38c6e0"/>
           <polygon points="44,33 36,36 42,39" fill="#38c6e0"/>
           <path d="M27 45 L32 49 L37 45" stroke="#a5e4ee" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="16" y1="28" x2="48" y2="28" stroke="#38c6e0" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.7"/>
+          <line x1="16" y1="28" x2="48" y2="28" stroke="#38c6e0" stroke-width="1.5" opacity="0.55"/>
         </svg>`,
       },
       {

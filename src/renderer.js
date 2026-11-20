@@ -220,7 +220,7 @@ export class GameRenderer {
           fill: 'rgba(242, 181, 68, 0.06)',
           stroke: map.starStroke,
           'stroke-width': 1.5,
-          'stroke-dasharray': '5 4',
+          opacity: '0.6',
         }));
         const star = svgIcon('star', x + 50, y + 50, 46, map.starColor, 2.2, { fill: map.starColor, fillOpacity: 0.25 });
         star.classList.add('board-star-icon');
@@ -251,10 +251,9 @@ export class GameRenderer {
         x1: c0 * 100 + 50, y1: r0 * 100 + 50,
         x2: c4 * 100 + 50, y2: r4 * 100 + 50,
         stroke: hero.color,
-        'stroke-width': 8,
-        'stroke-dasharray': '14 10',
-        opacity: '0.45',
-        class: 'svg-dash-flow',
+        'stroke-width': 6,
+        'stroke-linecap': 'round',
+        opacity: '0.36',
       }));
 
       tiles.forEach(([r, c], stepIdx) => {
@@ -322,10 +321,9 @@ export class GameRenderer {
       yardG.appendChild(svgEl('rect', {
         x: x + 48, y: y + 48, width: 504, height: 504, rx: 30,
         fill: hero.colorDark,
-        opacity: '0.34',
+        opacity: '0.3',
         stroke: hero.color,
-        'stroke-width': 2.2,
-        'stroke-dasharray': map.yardPattern ? '20 8 4 8' : '14 8',
+        'stroke-width': 2,
         class: 'yard-inner-box',
       }));
 
@@ -380,15 +378,6 @@ export class GameRenderer {
           stroke: hero.color,
           'stroke-width': 3.5,
         }));
-        yardG.appendChild(svgEl('circle', {
-          cx, cy, r: 44,
-          fill: 'none',
-          stroke: map.ringColor,
-          'stroke-width': 1.8,
-          'stroke-dasharray': '7 6',
-          opacity: '0.55',
-          class: 'pad-dashed-ring',
-        }));
         yardG.appendChild(svgEl('circle', { cx, cy, r: 10, fill: hero.color, opacity: '0.28' }));
       });
 
@@ -418,10 +407,8 @@ export class GameRenderer {
       cx: 750, cy: 750, r: 92,
       fill: 'url(#coreGrad)',
       stroke: map.ringColor,
-      'stroke-width': 3,
-      'stroke-dasharray': '16 12',
-      opacity: '0.9',
-      class: 'svg-spin-center',
+      'stroke-width': 3.5,
+      opacity: '0.92',
     }));
 
     const emblem = svgEl('g', {
@@ -494,10 +481,9 @@ export class GameRenderer {
           d: `M ${x1} ${y1} Q ${mx} ${my} ${x2} ${y2}`,
           fill: 'none',
           stroke: activePlayer.hero.color,
-          'stroke-width': 10,
-          'stroke-dasharray': '16 10',
+          'stroke-width': 9,
+          'stroke-linecap': 'round',
           filter: 'url(#neonSoft)',
-          class: 'svg-dash-flow',
         }));
         this._drawPreviewReticle(x2, y2, activePlayer.hero.color, 'SWAP', 'swap');
       }
@@ -536,13 +522,11 @@ export class GameRenderer {
       points: polyPoints,
       fill: 'none',
       stroke: activePlayer.hero.color,
-      'stroke-width': 11,
+      'stroke-width': 10,
       'stroke-linecap': 'round',
       'stroke-linejoin': 'round',
-      'stroke-dasharray': '18 12',
-      opacity: '0.92',
+      opacity: '0.88',
       filter: 'url(#neonSoft)',
-      class: 'svg-dash-flow',
     }));
 
     // Step dots along path
@@ -716,9 +700,7 @@ export class GameRenderer {
           fill: color,
           'fill-opacity': 0.2,
           stroke: color,
-          'stroke-width': 4.5,
-          'stroke-dasharray': '14 8',
-          class: 'svg-spin-center',
+          'stroke-width': 4,
         }));
       } else {
         og.appendChild(svgEl('rect', {
@@ -727,7 +709,6 @@ export class GameRenderer {
           'fill-opacity': 0.16,
           stroke: color,
           'stroke-width': 3.5,
-          'stroke-dasharray': shape === 'dashed' ? '8 5' : 'none',
         }));
       }
       og.appendChild(svgIcon(glyph, cx, cy, 48, color, 2.2));
@@ -741,7 +722,7 @@ export class GameRenderer {
       PORTAL_PAIR.forEach((idx) => tileOverlay(idx, 'PORTAL SHIFT — mendarat di wormhole ini langsung teleport ke seberang!', 'portal', '#2dd4bf', 'circle'));
     }
     state.mysteryActive.forEach((idx) => {
-      tileOverlay(idx, 'MYSTERY BOX — isi acak: Dadu Spesial, Reverse Uno, EMP Shock, atau +35 Energi.', 'gift', '#f2b544', 'dashed');
+      tileOverlay(idx, 'MYSTERY BOX — isi acak: Dadu Spesial, Reverse Uno, EMP Shock, atau +35 Energi.', 'gift', '#f2b544', 'rect');
     });
     for (const idxStr of Object.keys(state.slimeTraps)) {
       tileOverlay(Number(idxStr), 'SLIME TRAP — lawan yang melintas lengket & berhenti di sini!', 'slime', '#4ade80', 'circle');

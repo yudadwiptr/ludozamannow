@@ -535,7 +535,7 @@ body::after {
 
 .pawn-token.is-shielded .pawn-ring {
   inset: -5px;
-  border: 2.5px dashed #a5e4ee;
+  border: 2.5px solid #a5e4ee;
   box-shadow: 0 0 12px rgba(56, 198, 224, 0.65);
   animation: spinSlow 4s linear infinite;
 }
@@ -3086,7 +3086,7 @@ body[data-pawn-skin="bidak"] .pawn-core {
   position: absolute;
   inset: 18px;
   border-radius: 50%;
-  border: 1.5px dashed color-mix(in srgb, var(--ld-accent) 45%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--ld-accent) 45%, transparent);
   animation: spinSlow 14s linear infinite reverse;
 }
 
@@ -4820,7 +4820,7 @@ body[data-theme="nusantara"] .brand-logo,
   color: #efcf86;
   font-weight: 700;
   text-decoration: none;
-  border-bottom: 1px dashed rgba(239, 207, 134, 0.45);
+  border-bottom: 1px solid rgba(239, 207, 134, 0.45);
 }
 
 .app-credit a:hover,
@@ -5563,16 +5563,6 @@ body[data-theme="nusantara"] .brand-logo,
   .app-credit {
     padding: 3px 0 calc(6px + env(safe-area-inset-bottom));
     font-size: 0.58rem;
-  }
-
-  /* Clean mobile board: remove noisy dashed rings on pawn docking pads */
-  .pad-dashed-ring {
-    display: none;
-  }
-
-  .yard-inner-box {
-    stroke-dasharray: none;
-    opacity: 0.28;
   }
 }
 
