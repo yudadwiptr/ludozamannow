@@ -60,6 +60,7 @@ export class GameRenderer {
     this.cb = callbacks;
     this.pawnNodes = new Map();
     this.pawnLastPos = new Map();
+    this.activeEmotes = new Map();
     this.currentThemeId = null;
     this.currentMapId = null;
     this.lastState = null;
@@ -999,6 +1000,7 @@ export class GameRenderer {
 
     this.dom.leftCards.innerHTML = leftIds.map(buildCard).join('');
     this.dom.rightCards.innerHTML = rightIds.map(buildCard).join('');
+    this._restoreActiveEmotes();
 
     document.querySelectorAll('[data-action="skill"]').forEach((btn) => {
       btn.addEventListener('click', (e) => {
@@ -1210,21 +1212,57 @@ export class GameRenderer {
     }
   }
 
-  showEmote(heroId, text) {
+  _mountEmoteBubble(heroId, entry, isFresh = false) {
     const anchor = document.getElementById(`emote-anchor-${heroId}`);
     if (!anchor) return;
+    anchor.innerHTML = '';
+    const bubble = document.createElement('div');
+    bubble.className = `emote-bubble ${isFresh ? '' : 'persisted'} ${entry.fading ? 'fading' : ''}`.trim();
+    bubble.innerHTML = `${icon(entry.iconName, { stroke: 2.4 })}<span></span>`;
+    bubble.querySelector('span').textContent = entry.clean;
+    anchor.appendChild(bubble);
+  }
+
+  _restoreActiveEmotes() {
+    for (const [heroId, entry] of this.activeEmotes.entries()) {
+      this._mountEmoteBubble(heroId, entry, false);
+    }
+  }
+
+  showEmote(heroId, text) {
     const clean = stripEmoji(text);
     const theme = getTheme(this.lastState?.theme);
     const match = theme.emotes.find((e) => e.label === clean);
-    anchor.innerHTML = '';
-    const bubble = document.createElement('div');
-    bubble.className = 'emote-bubble';
-    bubble.innerHTML = `${icon(match?.icon || (clean.includes('GG') ? 'trophy' : 'chat'), { stroke: 2.4 })}<span></span>`;
-    bubble.querySelector('span').textContent = clean;
-    anchor.appendChild(bubble);
-    setTimeout(() => {
-      if (bubble.parentNode === anchor) bubble.remove();
-    }, 2200);
+    const iconName = match?.icon || (clean.includes('GG') ? 'trophy' : 'chat');
+
+    const prev = this.activeEmotes.get(heroId);
+    if (prev) {
+      clearTimeout(prev.fadeTimerId);
+      clearTimeout(prev.timerId);
+    }
+
+    const entry = {
+      clean,
+      iconName,
+      fading: false,
+      fadeTimerId: null,
+      timerId: null,
+    };
+
+    entry.fadeTimerId = setTimeout(() => {
+      entry.fading = true;
+      const anchor = document.getElementById(`emote-anchor-${heroId}`);
+      anchor?.querySelector('.emote-bubble')?.classList.add('fading');
+    }, 3350);
+
+    entry.timerId = setTimeout(() => {
+      this.activeEmotes.delete(heroId);
+      const anchor = document.getElementById(`emote-anchor-${heroId}`);
+      if (anchor) anchor.innerHTML = '';
+    }, 3800);
+
+    this.activeEmotes.set(heroId, entry);
+    this._mountEmoteBubble(heroId, entry, true);
   }
 
   _renderVictoryModal(state) {
