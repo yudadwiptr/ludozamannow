@@ -74,7 +74,7 @@ export async function runLoader(o) {
   root.dataset.kind = o.kind;
   root.style.setProperty('--ld-accent', map.ringColor);
   el('ld-stage').innerHTML = `${buildCube(o.cosmetics.dice)}<div class="ld-orbit">${buildOrbit(o.heroes, o.cosmetics.pawn)}</div>`;
-  el('ld-sub').textContent = o.kind === 'boot' ? 'LUDO ZAMAN NOW' : (o.modeLabel || 'MEMASUKI ARENA');
+  el('ld-sub').textContent = o.kind === 'boot' ? '' : (o.modeLabel || 'MEMASUKI ARENA');
   el('ld-lineup').innerHTML = o.kind === 'match' && o.lineup ? buildLineup(o.lineup) : '';
   el('ld-tip').innerHTML = o.kind === 'match'
     ? `${icon('bulb')}<span>${TIPS[Math.floor(Math.random() * TIPS.length)]}</span>`

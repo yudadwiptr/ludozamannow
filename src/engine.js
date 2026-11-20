@@ -14,6 +14,8 @@ import {
   TURBO_TILES,
   MAX_PROGRESS,
   OVERDRIVE_COST,
+  INITIAL_ENERGY,
+  SWAP_MAX_RANGE,
   DICE_TYPES,
   SPECIAL_DICE_POOL,
   BOARD_EVENTS,
@@ -52,16 +54,25 @@ export function getPawnGridPos(playerId, pawn) {
   return HOME_STRETCHES[playerId][homeIdx];
 }
 
+export const ONLINE_TURN_SEC = 20;
+
 export class GameEngine {
-  constructor({ onRender, onLog, onEmote, fx, onDispatchOnlineAction }) {
+  constructor({ onRender, onLog, onEmote, fx, onDispatchOnlineAction, onTimerTick, onNotice, onRollJackpot, onKOContext }) {
     this.onRender = onRender;
     this.onLog = onLog;
     this.onEmote = onEmote;
     this.fx = fx;
     this.onDispatchOnlineAction = onDispatchOnlineAction;
+    this.onTimerTick = onTimerTick;
+    this.onNotice = onNotice;
+    this.onRollJackpot = onRollJackpot;
+    this.onKOContext = onKOContext;
     this.state = null;
     this._aiTimer = null;
     this._autoMoveTimer = null;
+    this._turnInterval = null;
+    this._turnTimerKey = null;
+    this._turnRemaining = null;
     this._rand = Math.random;
     this._actionQueue = Promise.resolve();
   }
@@ -75,6 +86,7 @@ export class GameEngine {
   }) {
     clearTimeout(this._aiTimer);
     clearTimeout(this._autoMoveTimer);
+    this._stopTurnTimer();
     this._actionQueue = Promise.resolve();
 
     const matchSeed = seed ?? Math.floor(Math.random() * 2_000_000_000) + 1;
@@ -103,6 +115,7 @@ export class GameEngine {
             progress: -1,
             isAce: false,
             shieldTurns: 0,
+            dizzyTurns: 0,
             finished: false,
           });
         }
@@ -112,7 +125,7 @@ export class GameEngine {
           displayName: c.name || null,
           type: c.type, // 'human' | 'ai'
           pawns,
-          energy: 45,
+          energy: INITIAL_ENERGY,
           diceInventory: [this._randomSpecialDice(), this._randomSpecialDice()],
           kills: 0,
           finishedCount: 0,
@@ -202,7 +215,81 @@ export class GameEngine {
   }
 
   _render() {
+    this._syncTurnTimer();
     if (this.onRender) this.onRender(this.state);
+  }
+
+  // --------------------------------------------------------------------------
+  // Online Anti-AFK Turn Timer (20s per human decision; Host auto-resolves)
+  // --------------------------------------------------------------------------
+
+  _stopTurnTimer() {
+    clearInterval(this._turnInterval);
+    this._turnInterval = null;
+    this._turnTimerKey = null;
+    this._turnRemaining = null;
+    this.onTimerTick?.(null, false);
+  }
+
+  _syncTurnTimer() {
+    if (!this.state || !this.state.online.enabled) {
+      if (this._turnInterval) this._stopTurnTimer();
+      return;
+    }
+    const p = this.currentPlayer;
+    const waitingPhases = ['WAITING_ROLL', 'SELECT_PAWN', 'SKILL_SELECT_OWN', 'SKILL_SELECT_ENEMY'];
+    if (!p || p.type !== 'human' || !waitingPhases.includes(this.state.phase)) {
+      if (this._turnInterval || this._turnRemaining !== null) this._stopTurnTimer();
+      return;
+    }
+
+    const key = `${this.state.turnCount}:${this.state.consecutiveBonusRolls}:${p.id}:${this.state.phase}`;
+    if (this._turnTimerKey === key) return;
+
+    clearInterval(this._turnInterval);
+    this._turnTimerKey = key;
+    this._turnRemaining = ONLINE_TURN_SEC;
+    const isMyTurn = p.id === this.state.online.mySeatIndex;
+    this.onTimerTick?.(this._turnRemaining, isMyTurn);
+
+    this._turnInterval = setInterval(() => {
+      if (!this.state || this._turnTimerKey !== key) {
+        this._stopTurnTimer();
+        return;
+      }
+      this._turnRemaining = Math.max(0, this._turnRemaining - 1);
+      const mine = this.currentPlayer?.id === this.state.online.mySeatIndex;
+      this.onTimerTick?.(this._turnRemaining, mine);
+      if (mine && this._turnRemaining > 0 && this._turnRemaining <= 5) {
+        sfx.timerTick(this._turnRemaining <= 3);
+      }
+      if (this._turnRemaining <= 0) {
+        this._stopTurnTimer();
+        this._handleOnlineAFKTimeout();
+      }
+    }, 1000);
+  }
+
+  _handleOnlineAFKTimeout() {
+    if (!this.state || !this.state.online.enabled) return;
+    const p = this.currentPlayer;
+    if (!p || p.type !== 'human') return;
+    this.onNotice?.(`Waktu giliran ${p.displayName || p.hero.name} habis — langkah otomatis!`, 'hourglass');
+    if (!this.state.online.isHost) return;
+
+    if (this.state.phase === 'SKILL_SELECT_OWN' || this.state.phase === 'SKILL_SELECT_ENEMY') {
+      this.onDispatchOnlineAction?.('cancel_skill', {});
+      setTimeout(() => {
+        if (this.state?.phase === 'WAITING_ROLL') {
+          this.onDispatchOnlineAction?.('roll_dice', { power: 0.5 });
+        }
+      }, 150);
+    } else if (this.state.phase === 'WAITING_ROLL') {
+      this.onDispatchOnlineAction?.('roll_dice', { power: 0.5 });
+    } else if (this.state.phase === 'SELECT_PAWN' && this.state.validPawnIds.length > 0) {
+      const best = this._aiChooseBestPawn(p, this.state.validPawnIds, this.state._currentMoveSteps, this.state.rolledDiceId);
+      this.onDispatchOnlineAction?.('select_pawn', { pawnId: best });
+    }
   }
 
   // --------------------------------------------------------------------------
@@ -218,6 +305,29 @@ export class GameEngine {
   async _applyRemoteAction(action) {
     if (!this.state) return;
     const { type, payload = {}, senderSeat } = action;
+    if (type === 'player_to_bot') {
+      const target = this.getPlayerById(payload.seatIndex);
+      if (target && target.type !== 'ai') {
+        const who = payload.name || target.displayName || target.hero.name;
+        target.type = 'ai';
+        target.displayName = null;
+        this.onNotice?.(`${who} terputus — AI Bot mengambil alih ${target.hero.name}!`, 'bot');
+        this._render();
+        // If it's currently their turn, Host immediately lets AI take over!
+        if (this.currentPlayer?.id === target.id && this.state.online.isHost) {
+          if (this.state.phase === 'WAITING_ROLL') {
+            this._scheduleAIIfNeeded();
+          } else if (this.state.phase === 'SKILL_SELECT_OWN' || this.state.phase === 'SKILL_SELECT_ENEMY') {
+            this.onDispatchOnlineAction?.('cancel_skill', {});
+            setTimeout(() => this._scheduleAIIfNeeded(), 200);
+          } else if (this.state.phase === 'SELECT_PAWN' && this.state.validPawnIds.length > 0) {
+            const best = this._aiChooseBestPawn(target, this.state.validPawnIds, this.state._currentMoveSteps, this.state.rolledDiceId);
+            this.onDispatchOnlineAction?.('select_pawn', { pawnId: best });
+          }
+        }
+      }
+      return;
+    }
     if (type === 'emote') {
       if (this.onEmote) this.onEmote(payload.heroId ?? senderSeat, payload.text);
       return;
@@ -314,13 +424,50 @@ export class GameEngine {
 
   _doCancelSkillSelection() {
     if (!this.state) return;
+    const p = this.currentPlayer;
     if (this.state.phase === 'SKILL_SELECT_OWN' || this.state.phase === 'SKILL_SELECT_ENEMY') {
       this.state.phase = 'WAITING_ROLL';
       this.state.skillTempOwnPawnId = null;
       this.state.validPawnIds = [];
       sfx.click();
       this._render();
+      return;
     }
+    // Also allow canceling armed Sparky Split / Phantom Phase Dash before rolling!
+    if (this.state.phase === 'WAITING_ROLL' && p && (this.state.sparkySplitArmed || this.state.phaseDashActive)) {
+      this.state.sparkySplitArmed = false;
+      this.state.phaseDashActive = false;
+      p.energy = OVERDRIVE_COST;
+      sfx.click();
+      this.onNotice?.(`Skill ${p.hero.skillName} dibatalkan — energi kembali 100%!`, 'info');
+      this._render();
+    }
+  }
+
+  _getSwapEnemiesForOwnPawn(myPlayer, ownPawn) {
+    if (!ownPawn || ownPawn.progress < 0 || ownPawn.progress > 50) return [];
+    const ownGlobal = getGlobalTrackIndex(myPlayer.hero.startIdx, ownPawn.progress);
+    const list = [];
+    for (const pl of this.state.players) {
+      if (pl.id === myPlayer.id) continue;
+      for (const pw of pl.pawns) {
+        if (pw.progress < 0 || pw.progress > 50 || pw.finished) continue;
+        if (pw.shieldTurns > 0) continue; // Cannot swap shielded pawns!
+        const eGlobal = getGlobalTrackIndex(pl.hero.startIdx, pw.progress);
+        if (this._isSafeTile(eGlobal)) continue; // Cannot swap pawns on Safe Zones!
+        const dist = Math.min((ownGlobal - eGlobal + 52) % 52, (eGlobal - ownGlobal + 52) % 52);
+        if (dist > 0 && dist <= SWAP_MAX_RANGE) {
+          list.push(pw);
+        }
+      }
+    }
+    return list;
+  }
+
+  _getValidOwnSwapPawns(myPlayer) {
+    return myPlayer.pawns.filter(
+      (pw) => pw.progress >= 0 && pw.progress <= 50 && !pw.finished && this._getSwapEnemiesForOwnPawn(myPlayer, pw).length > 0
+    );
   }
 
   _doActivateOverdriveSkill() {
@@ -330,22 +477,24 @@ export class GameEngine {
 
     const key = p.hero.key;
     if (key === 'kitsune') {
-      const ownTrackPawns = p.pawns.filter((pw) => pw.progress >= 0 && pw.progress <= 50);
-      const enemyTrackPawns = this._getAllEnemyTrackPawns(p.id);
-      if (ownTrackPawns.length === 0 || enemyTrackPawns.length === 0) {
-        this._log(`${p.hero.emoji} ${p.hero.skillName} butuh minimal 1 pionmu & 1 pion lawan di jalur utama!`, '#fb7185');
+      const validOwn = this._getValidOwnSwapPawns(p);
+      if (validOwn.length === 0) {
+        const msg = `${p.hero.skillName} butuh lawan dalam jarak maks. ${SWAP_MAX_RANGE} petak (di luar Safe Zone/Perisai)!`;
+        this._log(msg, '#fb7185');
+        this.onNotice?.(msg, 'alert');
         sfx.click();
         return;
       }
       sfx.skillActivate();
-      if (ownTrackPawns.length === 1) {
-        this.state.skillTempOwnPawnId = ownTrackPawns[0].id;
+      if (validOwn.length === 1) {
+        this.state.skillTempOwnPawnId = validOwn[0].id;
+        const enemies = this._getSwapEnemiesForOwnPawn(p, validOwn[0]);
         this.state.phase = 'SKILL_SELECT_ENEMY';
-        this.state.validPawnIds = enemyTrackPawns.map((pw) => pw.id);
-        this._log(`${p.hero.emoji} Pilih pion LAWAN untuk ${p.hero.skillName}!`, p.hero.color);
+        this.state.validPawnIds = enemies.map((pw) => pw.id);
+        this._log(`${p.hero.emoji} Pilih pion LAWAN (petak merah) untuk ${p.hero.skillName}!`, p.hero.color);
       } else {
         this.state.phase = 'SKILL_SELECT_OWN';
-        this.state.validPawnIds = ownTrackPawns.map((pw) => pw.id);
+        this.state.validPawnIds = validOwn.map((pw) => pw.id);
         this._log(`${p.hero.emoji} Pilih pion ${p.hero.name} untuk ${p.hero.skillName}!`, p.hero.color);
       }
       this._render();
@@ -355,19 +504,18 @@ export class GameEngine {
     if (key === 'titan') {
       const ownTrackPawns = p.pawns.filter((pw) => pw.progress >= 0 && pw.progress <= 50);
       if (ownTrackPawns.length === 0) {
-        this._log(`${p.hero.emoji} ${p.hero.skillName} butuh minimal 1 pion di jalur utama!`, '#fb7185');
+        const msg = `${p.hero.skillName} butuh minimal 1 pion di jalur utama!`;
+        this._log(msg, '#fb7185');
+        this.onNotice?.(msg, 'alert');
         sfx.click();
         return;
       }
       sfx.skillActivate();
-      if (ownTrackPawns.length === 1) {
-        this._applyTitanShield(p, ownTrackPawns[0]);
-      } else {
-        this.state.phase = 'SKILL_SELECT_OWN';
-        this.state.validPawnIds = ownTrackPawns.map((pw) => pw.id);
-        this._log(`${p.hero.emoji} Pilih pion ${p.hero.name} untuk dipasangi ${p.hero.skillName}!`, p.hero.color);
-        this._render();
-      }
+      // Always enter SKILL_SELECT_OWN so player sees target highlight & can cancel misclicks!
+      this.state.phase = 'SKILL_SELECT_OWN';
+      this.state.validPawnIds = ownTrackPawns.map((pw) => pw.id);
+      this._log(`${p.hero.emoji} Ketuk pion ${p.hero.name} untuk pasang ${p.hero.skillName} (atau Batal)!`, p.hero.color);
+      this._render();
       return;
     }
 
@@ -471,6 +619,10 @@ export class GameEngine {
     this.state.powerCharge = powerLevel;
     this._render();
 
+    if (powerLevel > 0.72) {
+      this.fx?.shake('light');
+    }
+
     for (let i = 0; i < 6; i++) {
       const previewFace = diceDef.faces[Math.floor(this._rand() * diceDef.faces.length)];
       this.state.rolledValue = previewFace;
@@ -482,6 +634,11 @@ export class GameEngine {
     const finalFace = this._pickDiceFace(diceDef.faces, powerLevel);
     this.state.rolledValue = finalFace;
     sfx.diceLand(finalFace >= 6);
+    if (finalFace >= 6) {
+      this.fx?.shake('light');
+      this.onRollJackpot?.(finalFace, player.hero.color);
+      if (typeof navigator !== 'undefined') navigator.vibrate?.(22);
+    }
 
     let effectiveSteps = finalFace;
     if (this.state.phaseDashActive && finalFace >= 0) {
@@ -626,11 +783,11 @@ export class GameEngine {
       }
       if (player.hero.key === 'kitsune') {
         this.state.skillTempOwnPawnId = ownPawn.id;
-        const enemies = this._getAllEnemyTrackPawns(player.id);
+        const enemies = this._getSwapEnemiesForOwnPawn(player, ownPawn);
         this.state.phase = 'SKILL_SELECT_ENEMY';
         this.state.validPawnIds = enemies.map((pw) => pw.id);
         sfx.click();
-        this._log(`${player.hero.emoji} Sekarang pilih pion LAWAN untuk ditukar!`, player.hero.color);
+        this._log(`${player.hero.emoji} Sekarang pilih pion LAWAN (petak merah) untuk ditukar!`, player.hero.color);
         this._render();
         return;
       }
@@ -721,6 +878,7 @@ export class GameEngine {
               this.fx?.floatingTextAtGrid(tr, tc, `${player.hero.emoji} TEMBUS!`, player.hero.color);
             } else {
               delete this.state.slimeTraps[gIdx];
+              pawn.dizzyTurns = 1;
               const [tr, tc] = MAIN_TRACK[gIdx];
               sfx.slime();
               this.fx?.burstAtGrid(tr, tc, '#4ade80', 22, 3.2);
@@ -930,6 +1088,7 @@ export class GameEngine {
       this.fx?.shake('heavy');
       this._log(`🛡️ ${shielded.owner.hero.skillName.toUpperCase()} memantulkan ${player.hero.name} mundur 3 langkah!`, shielded.owner.hero.color);
       pawn.progress = Math.max(0, pawn.progress - 3);
+      pawn.dizzyTurns = 1;
       this._render();
       await sleep(340);
       return false;
@@ -939,25 +1098,41 @@ export class GameEngine {
     const [kr, kc] = MAIN_TRACK[gIdx];
     sfx.koFinisher(player.hero.koType);
     this.fx?.playKOFinisher(player.hero.koType, kr, kc, player.hero.color, player.hero.koText);
+    if (typeof navigator !== 'undefined') navigator.vibrate?.([35, 30, 55]);
 
     // Pause briefly for meteor/blackhole impact climax before sending enemy home!
     await sleep(300);
 
+    const themeEmotes = getTheme(this.state.theme).emotes;
+    const koWinEmote = themeEmotes.find((e) => e.kind === 'ko_win') || themeEmotes[0];
+    const koSadEmote = themeEmotes.find((e) => e.kind === 'ko_sad') || themeEmotes[1];
+
     for (const t of targets) {
+      const wasNearFinish = t.pawn.progress >= 38;
       t.pawn.progress = -1;
       t.pawn.shieldTurns = 0;
+      t.pawn.dizzyTurns = 0;
       t.pawn.isAce = false;
       this._addEnergy(t.owner, 25);
       player.kills += 1;
       this._log(`💥 ${player.hero.koText} — ${player.hero.name} memulangkan ${t.owner.hero.name} & naik jadi ⭐ ACE!`, player.hero.color);
+
+      this.onKOContext?.({
+        attackerId: player.id,
+        victimId: t.owner.id,
+        nearFinish: wasNearFinish,
+      });
+
+      if (t.owner.type === 'ai' && wasNearFinish && this.onEmote) {
+        setTimeout(() => this.onEmote?.(t.owner.id, koSadEmote.label), 320);
+      }
     }
 
     pawn.isAce = true;
     this._addEnergy(player, 40);
 
-    if (player.type === 'ai' && this._rand() < 0.7 && this.onEmote) {
-      const themeEmotes = getTheme(this.state.theme).emotes;
-      this.onEmote(player.id, themeEmotes[Math.floor(this._rand() * themeEmotes.length)].label);
+    if (player.type === 'ai' && this._rand() < 0.8 && this.onEmote) {
+      this.onEmote(player.id, koWinEmote.label);
     }
 
     this._render();
@@ -1000,6 +1175,7 @@ export class GameEngine {
     const nextPlayer = this.currentPlayer;
     for (const pw of nextPlayer.pawns) {
       if (pw.shieldTurns > 0) pw.shieldTurns -= 1;
+      if (pw.dizzyTurns > 0) pw.dizzyTurns -= 1;
     }
 
     this.state.phase = 'WAITING_ROLL';
@@ -1119,13 +1295,13 @@ export class GameEngine {
   _aiPlanOverdrive(p) {
     const key = p.hero.key;
     if (key === 'kitsune') {
-      const ownTrack = p.pawns.filter((pw) => pw.progress >= 0 && pw.progress <= 50);
-      const enemies = this._getAllEnemyTrackPawns(p.id);
-      if (ownTrack.length > 0 && enemies.length > 0) {
-        ownTrack.sort((a, b) => a.progress - b.progress);
-        const myLag = ownTrack[0];
+      const validOwn = this._getValidOwnSwapPawns(p);
+      if (validOwn.length > 0) {
+        validOwn.sort((a, b) => a.progress - b.progress);
+        const myLag = validOwn[0];
+        const enemies = this._getSwapEnemiesForOwnPawn(p, myLag);
         let bestEnemy = null;
-        let bestGain = 6;
+        let bestGain = 1;
         for (const ep of enemies) {
           const epOwner = this.getPlayerById(ep.playerId);
           const eGlobal = getGlobalTrackIndex(epOwner.hero.startIdx, ep.progress);
@@ -1138,17 +1314,16 @@ export class GameEngine {
         }
         if (bestEnemy) {
           return {
-            ownPawnId: ownTrack.length > 1 ? myLag.id : null,
+            ownPawnId: validOwn.length > 1 ? myLag.id : null,
             enemyPawnId: bestEnemy.id,
           };
         }
       }
     } else if (key === 'titan') {
-      const ownTrack = p.pawns.filter((pw) => pw.progress >= 10 && pw.progress <= 50 && pw.shieldTurns === 0);
+      const ownTrack = p.pawns.filter((pw) => pw.progress >= 6 && pw.progress <= 50 && pw.shieldTurns === 0);
       if (ownTrack.length > 0) {
         ownTrack.sort((a, b) => b.progress - a.progress);
-        const allTrack = p.pawns.filter((pw) => pw.progress >= 0 && pw.progress <= 50);
-        return { ownPawnId: allTrack.length > 1 ? ownTrack[0].id : null };
+        return { ownPawnId: ownTrack[0].id };
       }
     } else if (key === 'sparky') {
       const hasOut = p.pawns.some((pw) => !pw.finished && pw.progress >= 0);

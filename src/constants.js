@@ -49,6 +49,8 @@ export const TURBO_TILES = [2, 3, 15, 16, 28, 29, 41, 42];
 
 export const MAX_PROGRESS = 56;
 export const OVERDRIVE_COST = 100;
+export const INITIAL_ENERGY = 10;
+export const SWAP_MAX_RANGE = 8;
 
 // ============================================================================
 // Theme Definitions: 🇮🇩 NUSANTARA CYBERPUNK vs 🌃 NEO-ARCADE
@@ -70,9 +72,10 @@ export const THEMES = {
     batikPattern: true,
     emotes: [
       { id: 'ez', icon: 'laugh', label: 'AUTO PULANG!' },
+      { id: 'ko_win', icon: 'burst', label: 'MAMPUS KO!', kind: 'ko_win' },
+      { id: 'ko_sad', icon: 'skull', label: 'PADAHAL DIKIT LAGI!', kind: 'ko_sad' },
       { id: 'ampun', icon: 'pray', label: 'AMPUN SUHU' },
       { id: 'sakti', icon: 'bolt', label: 'SAKTI BOSS!' },
-      { id: 'mental', icon: 'skull', label: 'KENA MENTAL' },
       { id: 'gas', icon: 'flame', label: 'GASKEUN!' },
     ],
     heroes: [
@@ -87,7 +90,7 @@ export const THEMES = {
         glow: 'rgba(45, 212, 191, 0.3)',
         startIdx: 0,
         skillName: 'Tukar Bayangan',
-        skillDesc: 'Tukar posisi 1 pionmu dengan pion lawan di jalur utama!',
+        skillDesc: 'Tukar posisi 1 pionmu dengan pion lawan dalam jarak maks. 8 petak (di luar Safe Zone/Perisai)!',
         koType: 'glitch_beam',
         koText: 'GARUDA LASER KO!',
         svgAvatar: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -188,8 +191,9 @@ export const THEMES = {
     batikPattern: false,
     emotes: [
       { id: 'ez', icon: 'laugh', label: 'EZ!' },
+      { id: 'ko_win', icon: 'burst', label: 'RATA BOSS!', kind: 'ko_win' },
+      { id: 'ko_sad', icon: 'skull', label: 'DIKIT LAGI PADAHAL!', kind: 'ko_sad' },
       { id: 'ampun', icon: 'pray', label: 'AMPUN' },
-      { id: 'mental', icon: 'skull', label: 'KENA MENTAL' },
       { id: 'awas', icon: 'eye', label: 'AWAS YA!' },
       { id: 'gaskeun', icon: 'flame', label: 'GASKEUN!' },
     ],
@@ -205,7 +209,7 @@ export const THEMES = {
         glow: 'rgba(56, 198, 224, 0.3)',
         startIdx: 0,
         skillName: 'Swap Glitch',
-        skillDesc: 'Tukar posisi 1 pionmu dengan pion lawan di jalur utama!',
+        skillDesc: 'Tukar posisi 1 pionmu dengan pion lawan dalam jarak maks. 8 petak (di luar Safe Zone/Perisai)!',
         koType: 'glitch_beam',
         koText: 'CYBER GLITCH KO!',
         svgAvatar: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">

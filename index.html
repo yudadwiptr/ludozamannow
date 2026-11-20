@@ -21,7 +21,7 @@
     <div class="ld-glow"></div>
     <div class="ld-center">
       <div id="ld-brand" class="ld-brand" aria-label="LUDOZ"></div>
-      <div id="ld-sub" class="ld-sub">LUDO ZAMAN NOW</div>
+      <div id="ld-sub" class="ld-sub"></div>
       <div id="ld-stage" class="ld-stage"></div>
       <div id="ld-lineup" class="ld-lineup"></div>
       <div class="ld-progress-wrap">
@@ -33,7 +33,6 @@
       </div>
       <div id="ld-tip" class="ld-tip"></div>
     </div>
-    <div class="ld-credit">Built by <a href="https://yumastudio.digital/" target="_blank" rel="noopener">yumastudio.digital</a></div>
   </div>
 
   <div class="app-shell">
@@ -41,7 +40,6 @@
     <header class="top-bar">
       <div class="brand-wrap">
         <span id="brand-logo" class="brand-logo" aria-label="LUDOZ"></span>
-        <span id="brand-pill" class="brand-pill">LUDO ZAMAN NOW</span>
       </div>
 
       <div id="event-banner" class="event-banner idle"></div>
@@ -67,8 +65,6 @@
           <div class="panel-mini-title" data-icon="chat"><span>EMOTE</span></div>
           <div id="emote-bar" class="emote-bar"></div>
         </div>
-
-        <div class="app-credit">Built by <a href="https://yumastudio.digital/" target="_blank" rel="noopener">yumastudio.digital</a></div>
       </section>
 
       <!-- Center: Board -->
@@ -91,15 +87,19 @@
       <section class="side-col right-col">
         <div id="right-cards" class="cards-stack"></div>
 
-        <div class="dock-panel">
+        <div id="dock-panel" class="dock-panel">
           <!-- Overdrive Skill Quick Trigger (appears when 100% charged) -->
           <button id="dock-skill-btn" type="button" class="dock-skill-btn"></button>
 
-          <!-- Prompt Strip (No duplicated Hero Name!) -->
+          <!-- Prompt Strip + Online Turn Timer (No duplicated Hero Name!) -->
           <div class="dock-status-row">
             <div id="turn-prompt" class="turn-prompt">Cari angka 6 untuk keluar dari markas!</div>
+            <span id="turn-timer-pill" class="turn-timer-pill" style="display:none;" aria-live="polite"></span>
             <button id="cancel-skill-btn" type="button" class="cancel-skill-btn" data-icon="close"><span>Batal</span></button>
           </div>
+
+          <!-- Compact Dice Card Effect Hint (visible when hovering/tapping a card on mobile & desktop!) -->
+          <div id="dice-card-tip" class="dice-card-tip" aria-live="polite"></div>
 
           <!-- Main Interactive Clickable 3D Dice Pad -->
           <div class="dice-action-stage">
@@ -114,11 +114,10 @@
 
           <!-- Revamped Tactical Dice Cards Deck -->
           <div class="loadout-block">
-            <div class="panel-mini-title" data-icon="backpack"><span>KARTU DADU</span></div>
             <div id="dice-loadout" class="dice-loadout"></div>
           </div>
 
-          <div class="roll-hint">Klik / tahan dadu atau <kbd>SPACE</kbd> untuk lempar</div>
+          <div id="roll-hint" class="roll-hint">Klik / tahan dadu atau <kbd>SPACE</kbd> untuk lempar</div>
         </div>
       </section>
     </main>
@@ -129,7 +128,7 @@
     <div class="modal-card modal-setup">
       <div class="modal-header">
         <div>
-          <h2 id="setup-modal-title" class="modal-title">LUDOZ — LUDO ZAMAN NOW</h2>
+          <h2 id="setup-modal-title" class="modal-title">LOBBY PERMAINAN</h2>
           <p class="modal-sub">Wajib dadu 6 keluar markas • Efek KO khusus • Main lokal atau online</p>
         </div>
         <button id="close-setup-btn" type="button" class="icon-btn icon-only" title="Tutup" aria-label="Tutup" data-icon="close"></button>

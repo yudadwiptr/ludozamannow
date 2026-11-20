@@ -43,7 +43,6 @@ const escapeHTML = (str) =>
 
 const dom = {
   brandLogo: document.getElementById('brand-logo'),
-  brandPill: document.getElementById('brand-pill'),
   boardStage: document.getElementById('board-stage'),
   boardSvg: document.getElementById('board-svg'),
   pawnsLayer: document.getElementById('pawns-layer'),
@@ -56,13 +55,17 @@ const dom = {
   roundBadge: document.getElementById('round-badge'),
   dirBadge: document.getElementById('dir-badge'),
   eventBanner: document.getElementById('event-banner'),
+  dockPanel: document.getElementById('dock-panel'),
   turnPrompt: document.getElementById('turn-prompt'),
+  turnTimerPill: document.getElementById('turn-timer-pill'),
+  diceCardTip: document.getElementById('dice-card-tip'),
   cancelSkillBtn: document.getElementById('cancel-skill-btn'),
   diceCube: document.getElementById('dice-cube'),
   diceInfoLabel: document.getElementById('dice-info-label'),
   diceLoadout: document.getElementById('dice-loadout'),
   rollBtn: document.getElementById('roll-btn'),
   rollBtnText: document.getElementById('roll-btn-text'),
+  rollHint: document.getElementById('roll-hint'),
   powerFill: document.getElementById('power-fill'),
   dockSkillBtn: document.getElementById('dock-skill-btn'),
   emoteBar: document.getElementById('emote-bar'),
@@ -254,20 +257,186 @@ online = new OnlineClient({
   },
 });
 
+// ----------------------------------------------------------------------------
+// Interactive Tooltips: Dice Card Effect Hint & Hero Skill Popover
+// ----------------------------------------------------------------------------
+
+let diceTipTimer = null;
+function showDiceCardTip(diceId, autoHide = false) {
+  const el = dom.diceCardTip;
+  if (!el) return;
+  clearTimeout(diceTipTimer);
+  if (!diceId || !DICE_TYPES[diceId]) {
+    el.classList.remove('show');
+    return;
+  }
+  const def = DICE_TYPES[diceId];
+  el.style.setProperty('--tip-color', def.color);
+  el.innerHTML = `${icon(def.icon)}<strong>${def.name} (${def.short}):</strong><span>${def.desc}</span>`;
+  el.classList.add('show');
+  if (autoHide) {
+    diceTipTimer = setTimeout(() => el.classList.remove('show'), 2800);
+  }
+}
+
+let heroPopoverTimer = null;
+function closeHeroPopover() {
+  const pop = document.getElementById('hero-info-popover');
+  if (pop) pop.classList.remove('show');
+  clearTimeout(heroPopoverTimer);
+}
+
+function showHeroPopover(heroId) {
+  if (!engine.state) return;
+  const theme = getTheme(engine.state.theme);
+  const hero = theme.heroes[heroId];
+  const pl = engine.state.players.find((p) => p.id === heroId);
+  if (!hero) return;
+
+  let pop = document.getElementById('hero-info-popover');
+  if (!pop) {
+    pop = document.createElement('div');
+    pop.id = 'hero-info-popover';
+    pop.className = 'hero-info-popover';
+    document.body.appendChild(pop);
+  }
+
+  const energyPct = pl ? Math.min(100, Math.round(pl.energy)) : 0;
+  const ownerTxt = pl?.displayName ? ` · ${escapeHTML(pl.displayName)}` : '';
+  pop.style.setProperty('--hero-color', hero.color);
+  pop.style.setProperty('--hero-glow', hero.glow);
+  pop.innerHTML = `
+    <div class="hip-head">
+      <div class="hip-avatar">${hero.svgAvatar}</div>
+      <div class="hip-title-wrap">
+        <div class="hip-name">${hero.name}${ownerTxt}</div>
+        <div class="hip-sub">${hero.title} · Energi ${energyPct}%</div>
+      </div>
+      <button type="button" class="hip-close" aria-label="Tutup">${icon('close')}</button>
+    </div>
+    <div class="hip-row">
+      <span class="hip-badge">${icon('bolt')} OVERDRIVE: ${hero.skillName}</span>
+      <p>${hero.skillDesc}</p>
+    </div>
+    <div class="hip-row">
+      <span class="hip-badge ko">${icon('burst')} KO FINISHER: ${hero.koText}</span>
+    </div>
+  `;
+  pop.querySelector('.hip-close').addEventListener('click', closeHeroPopover);
+  pop.classList.add('show');
+  sfx.click();
+  clearTimeout(heroPopoverTimer);
+  heroPopoverTimer = setTimeout(closeHeroPopover, 5500);
+}
+
+document.addEventListener('pointerdown', (e) => {
+  const pop = document.getElementById('hero-info-popover');
+  if (pop?.classList.contains('show') && !pop.contains(e.target) && !e.target.closest('.hero-card')) {
+    closeHeroPopover();
+  }
+});
+
+// Online Turn Countdown Timer Pill
+function updateTurnTimer(sec, isMyTurn) {
+  const el = dom.turnTimerPill;
+  if (!el) return;
+  if (sec === null || sec === undefined) {
+    el.style.display = 'none';
+    el.classList.remove('warn', 'urgent');
+    return;
+  }
+  el.style.display = 'inline-flex';
+  el.innerHTML = `${icon('hourglass')}<span>${sec}s</span>`;
+  el.classList.toggle('warn', sec <= 8 && sec > 5);
+  el.classList.toggle('urgent', sec <= 5);
+  el.classList.toggle('mine', isMyTurn);
+}
+
+// Golden Celebration Burst on Dice Pad when rolling 6 or 8!
+function flashDiceJackpot(val) {
+  dom.rollBtn.classList.remove('jackpot-pop');
+  void dom.rollBtn.offsetWidth;
+  dom.rollBtn.classList.add('jackpot-pop');
+  setTimeout(() => dom.rollBtn.classList.remove('jackpot-pop'), 700);
+  if (val >= 6) {
+    dom.rollBtnText.textContent = val === 8 ? '8! MEGA!' : '6! BONUS!';
+  }
+}
+
 renderer = new GameRenderer(dom, {
   onPawnClick: (pawnId) => engine.selectPawn(pawnId),
   onSelectDice: (diceId) => engine.selectDice(diceId),
   onActivateSkill: () => engine.activateOverdriveSkill(),
+  onDiceTip: (diceId, autoHide) => showDiceCardTip(diceId, autoHide),
+  onHeroInspect: (heroId) => showHeroPopover(heroId),
 });
+
+// Emote Anti-Spam & Mute State
+const EMOTE_WINDOW_MS = 10_000;
+const EMOTE_MAX_BURST = 3;
+let emoteMuted = false;
+let sentEmoteTimes = [];
+let emoteCooldownTimer = null;
+let koContextTimer = null;
+const incomingEmoteHistory = new Map(); // heroId -> timestamp[]
+
+function isOpponentHero(heroId) {
+  if (!engine?.state) return false;
+  if (engine.state.online.enabled) {
+    return heroId !== engine.state.online.mySeatIndex;
+  }
+  const pl = engine.getPlayerById(heroId);
+  return pl?.type === 'ai';
+}
+
+function handleIncomingEmote(heroId, text) {
+  if (isOpponentHero(heroId)) {
+    if (emoteMuted) return;
+    // Also rate-limit incoming opponent emotes (max 3 per 10s per player)
+    const now = Date.now();
+    const list = (incomingEmoteHistory.get(heroId) || []).filter((t) => now - t < EMOTE_WINDOW_MS);
+    if (list.length >= EMOTE_MAX_BURST) return;
+    list.push(now);
+    incomingEmoteHistory.set(heroId, list);
+  }
+  sfx.emote();
+  renderer.showEmote(heroId, text);
+}
+
+function highlightContextualEmote({ attackerId, victimId }) {
+  if (!engine?.state) return;
+  const isOnline = engine.state.online.enabled;
+  const mySeat = isOnline ? engine.state.online.mySeatIndex : null;
+  const attackerPl = engine.getPlayerById(attackerId);
+  const victimPl = engine.getPlayerById(victimId);
+
+  let kindToHighlight = null;
+  if ((isOnline && attackerId === mySeat) || (!isOnline && attackerPl?.type === 'human')) {
+    kindToHighlight = 'ko_win';
+  } else if ((isOnline && victimId === mySeat) || (!isOnline && victimPl?.type === 'human')) {
+    kindToHighlight = 'ko_sad';
+  }
+  if (!kindToHighlight) return;
+
+  clearTimeout(koContextTimer);
+  dom.emoteBar.querySelectorAll('.emote-btn').forEach((b) => b.classList.remove('ctx-highlight'));
+  const targetBtn = dom.emoteBar.querySelector(`[data-emote-kind="${kindToHighlight}"]`);
+  if (targetBtn) {
+    targetBtn.classList.add('ctx-highlight');
+    targetBtn.scrollIntoView?.({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    koContextTimer = setTimeout(() => targetBtn.classList.remove('ctx-highlight'), 9000);
+  }
+}
 
 engine = new GameEngine({
   fx,
   onRender: (state) => renderer.render(state),
   onLog: addBattleLog,
-  onEmote: (heroId, text) => {
-    sfx.emote();
-    renderer.showEmote(heroId, text);
-  },
+  onTimerTick: updateTurnTimer,
+  onNotice: (text, iconName = 'info') => showToast(text, iconName),
+  onRollJackpot: flashDiceJackpot,
+  onKOContext: highlightContextualEmote,
+  onEmote: handleIncomingEmote,
   onDispatchOnlineAction: (type, payload) => {
     online.sendAction(type, payload);
   },
@@ -279,14 +448,22 @@ online.getServerInfo().then((info) => {
   renderOnlineRoom();
 });
 
+// Live sanitize Join Room Code (uppercase A-Z0-9 only)
+dom.joinCodeInput.addEventListener('input', () => {
+  const clean = dom.joinCodeInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+  if (dom.joinCodeInput.value !== clean) dom.joinCodeInput.value = clean;
+  if (clean.length === 4) dom.onlineError.textContent = '';
+});
+
 // ----------------------------------------------------------------------------
-// Power-Hold Roll Button (Pointer + Spacebar)
+// Power-Hold Roll Button (Pointer + Spacebar + Rising Charge SFX)
 // ----------------------------------------------------------------------------
 
 let isCharging = false;
 let chargeStart = 0;
 let chargeValue = 0.5;
 let chargeRaf = null;
+let lastChargeBeep = 0;
 
 function anyOverlayOpen() {
   return (
@@ -303,6 +480,7 @@ function startCharge() {
 
   isCharging = true;
   chargeStart = performance.now();
+  lastChargeBeep = chargeStart + 140; // Avoid extra beep on quick taps
   dom.rollBtn.classList.add('charging');
 
   const loop = (now) => {
@@ -311,6 +489,11 @@ function startCharge() {
     const cycle = (elapsed * 1.45) % 2;
     chargeValue = cycle <= 1 ? cycle : 2 - cycle;
     dom.powerFill.style.width = `${Math.round(chargeValue * 100)}%`;
+    dom.rollBtn.classList.toggle('high-charge', chargeValue > 0.72);
+    if (now - lastChargeBeep >= 120) {
+      lastChargeBeep = now;
+      sfx.chargeTick(chargeValue);
+    }
     chargeRaf = requestAnimationFrame(loop);
   };
   chargeRaf = requestAnimationFrame(loop);
@@ -320,7 +503,7 @@ function releaseCharge() {
   if (!isCharging) return;
   isCharging = false;
   cancelAnimationFrame(chargeRaf);
-  dom.rollBtn.classList.remove('charging');
+  dom.rollBtn.classList.remove('charging', 'high-charge');
   const heldMs = performance.now() - chargeStart;
   const finalPower = heldMs < 130 ? 0.5 : chargeValue;
   setTimeout(() => {
@@ -342,6 +525,7 @@ window.addEventListener('pointercancel', () => {
 
 window.addEventListener('keydown', (e) => {
   if (e.code === 'Escape') {
+    closeHeroPopover();
     if (dom.helpModal.classList.contains('open')) {
       dom.helpModal.classList.remove('open');
       return;
@@ -369,15 +553,67 @@ dom.cancelSkillBtn.addEventListener('click', () => engine.cancelSkillSelection()
 // Emote Bar
 // ----------------------------------------------------------------------------
 
+function syncEmoteCooldownUI() {
+  const now = Date.now();
+  sentEmoteTimes = sentEmoteTimes.filter((t) => now - t < EMOTE_WINDOW_MS);
+  const onCooldown = sentEmoteTimes.length >= EMOTE_MAX_BURST;
+  const remSec = onCooldown
+    ? Math.max(1, Math.ceil((EMOTE_WINDOW_MS - (now - sentEmoteTimes[0])) / 1000))
+    : 0;
+
+  dom.emoteBar.querySelectorAll('.emote-btn').forEach((btn) => {
+    btn.classList.toggle('cooldown', onCooldown);
+    if (onCooldown) {
+      btn.dataset.cd = `${remSec}s`;
+    } else {
+      delete btn.dataset.cd;
+    }
+  });
+
+  clearTimeout(emoteCooldownTimer);
+  if (onCooldown) {
+    emoteCooldownTimer = setTimeout(syncEmoteCooldownUI, 450);
+  }
+}
+
 function renderEmoteBar(themeId) {
   const emotes = getTheme(themeId).emotes;
-  dom.emoteBar.innerHTML = emotes
-    .map((em) => `<button type="button" class="emote-btn" data-emote="${em.label}">${icon(em.icon)}<span>${em.label}</span></button>`)
+  const muteBtnHTML = `<button type="button" id="mute-emote-btn" class="emote-mute-btn ${emoteMuted ? 'muted' : ''}" title="${emoteMuted ? 'Emote lawan dibisukan (klik untuk aktifkan)' : 'Bisukan emote lawan'}">${icon(emoteMuted ? 'off' : 'chat')}<span>${emoteMuted ? 'MUTE' : 'ON'}</span></button>`;
+  const emoteBtnsHTML = emotes
+    .map(
+      (em) =>
+        `<button type="button" class="emote-btn ${em.kind ? 'emote-special ' + em.kind : ''}" data-emote="${em.label}" ${em.kind ? `data-emote-kind="${em.kind}"` : ''}>${icon(em.icon)}<span>${em.label}</span></button>`
+    )
     .join('');
+
+  dom.emoteBar.innerHTML = muteBtnHTML + emoteBtnsHTML;
+
+  const muteBtn = document.getElementById('mute-emote-btn');
+  muteBtn?.addEventListener('click', () => {
+    emoteMuted = !emoteMuted;
+    sfx.click();
+    showToast(
+      emoteMuted ? 'Emote lawan dibisukan.' : 'Emote lawan diaktifkan kembali.',
+      emoteMuted ? 'off' : 'chat'
+    );
+    renderEmoteBar(lobbyState.theme);
+  });
 
   dom.emoteBar.querySelectorAll('.emote-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       if (!engine.state) return;
+      const now = Date.now();
+      sentEmoteTimes = sentEmoteTimes.filter((t) => now - t < EMOTE_WINDOW_MS);
+      if (sentEmoteTimes.length >= EMOTE_MAX_BURST) {
+        const rem = Math.max(1, Math.ceil((EMOTE_WINDOW_MS - (now - sentEmoteTimes[0])) / 1000));
+        showToast(`Anti-spam emote: tunggu ${rem} detik lagi.`, 'hourglass');
+        syncEmoteCooldownUI();
+        return;
+      }
+      sentEmoteTimes.push(now);
+      syncEmoteCooldownUI();
+      btn.classList.remove('ctx-highlight');
+
       if (engine.state.online.enabled) {
         online.sendAction('emote', {
           heroId: engine.state.online.mySeatIndex,
@@ -394,6 +630,8 @@ function renderEmoteBar(themeId) {
       renderer.showEmote(target.id, btn.dataset.emote);
     });
   });
+
+  syncEmoteCooldownUI();
 }
 
 // ----------------------------------------------------------------------------
@@ -590,7 +828,6 @@ const ROLE_META = {
 function renderSetupModal() {
   const theme = getTheme(lobbyState.theme);
   const heroes = theme.heroes;
-  dom.setupModalTitle.textContent = `${theme.brandTitle} — ${theme.brandPill}`;
 
   // Step 1: roster cards with hero line-up
   dom.themePicker.innerHTML = ROSTERS.map((r) => {

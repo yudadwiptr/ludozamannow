@@ -214,6 +214,10 @@ const server = http.createServer(async (req, res) => {
       res.write(`retry: 2000\n\n`);
       room.clients.set(clientId, res);
       if (clientId === room.hostId) clearTimeout(room.hostGraceTimer);
+      if (room.guestGraceTimers?.has(clientId)) {
+        clearTimeout(room.guestGraceTimers.get(clientId));
+        room.guestGraceTimers.delete(clientId);
+      }
       broadcast(room, 'room_update', serializeRoom(room));
 
       const heartbeat = setInterval(() => {
@@ -238,6 +242,28 @@ const server = http.createServer(async (req, res) => {
                 closeRoom(room.code, room, 'host_disconnected');
               }
             }, room.started ? 30_000 : 120_000);
+          } else if (room.started && rooms.get(room.code) === room) {
+            // Guest dropped mid-match: wait 12s for reconnect, then hand over seat to AI Bot!
+            if (!room.guestGraceTimers) room.guestGraceTimers = new Map();
+            const gTimer = setTimeout(() => {
+              if (!room.clients.has(clientId) && rooms.get(room.code) === room) {
+                const idx = room.seats.findIndex((s) => s.clientId === clientId);
+                if (idx !== -1) {
+                  const prevName = room.seats[idx].name || `Pemain ${idx + 1}`;
+                  room.seats[idx] = { type: 'ai', clientId: null, name: null };
+                  room.seq += 1;
+                  broadcast(room, 'room_update', serializeRoom(room));
+                  broadcast(room, 'game_action', {
+                    seq: room.seq,
+                    senderSeat: idx,
+                    isHost: true,
+                    type: 'player_to_bot',
+                    payload: { seatIndex: idx, name: prevName },
+                  });
+                }
+              }
+            }, 12_000);
+            room.guestGraceTimers.set(clientId, gTimer);
           }
         }
       });
@@ -313,9 +339,23 @@ const server = http.createServer(async (req, res) => {
           return sendJson(res, 200, { ok: true, closed: true });
         }
         const idx = room.seats.findIndex((s) => s.clientId === body.clientId);
-        if (idx !== -1) room.seats[idx] = { type: 'ai', clientId: null, name: null };
+        let prevName = null;
+        if (idx !== -1) {
+          prevName = room.seats[idx].name || `Pemain ${idx + 1}`;
+          room.seats[idx] = { type: 'ai', clientId: null, name: null };
+        }
         room.clients.delete(body.clientId);
         broadcast(room, 'room_update', serializeRoom(room));
+        if (room.started && idx !== -1) {
+          room.seq += 1;
+          broadcast(room, 'game_action', {
+            seq: room.seq,
+            senderSeat: idx,
+            isHost: true,
+            type: 'player_to_bot',
+            payload: { seatIndex: idx, name: prevName },
+          });
+        }
         return sendJson(res, 200, { ok: true });
       } catch (err) {
         return sendJson(res, 400, { error: err.message });

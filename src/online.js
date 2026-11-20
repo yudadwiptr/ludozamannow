@@ -438,8 +438,19 @@ export class OnlineClient {
     if (!this.room) return;
     const idx = this.room.seats.findIndex((s) => s.clientId === clientId);
     if (idx !== -1) {
+      const prevName = this.room.seats[idx].name || `Pemain ${idx + 1}`;
       this.room.seats[idx] = { seatIndex: idx, type: 'ai', clientId: null, name: null, connected: false };
       this._p2pBroadcast('room_update', this.room);
+      if (this.room.started) {
+        this._p2pSeq += 1;
+        this._p2pBroadcast('game_action', {
+          seq: this._p2pSeq,
+          senderSeat: idx,
+          isHost: true,
+          type: 'player_to_bot',
+          payload: { seatIndex: idx, name: prevName },
+        });
+      }
     }
   }
 

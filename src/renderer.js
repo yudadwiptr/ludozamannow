@@ -650,7 +650,9 @@ export class GameRenderer {
     if (this.currentThemeId !== theme.id || this.currentMapId !== this.cosmetics.map) {
       this._buildStaticBoardSVG(theme.id);
     }
-    this.dom.brandPill.textContent = theme.brandPill;
+    if (this.dom.brandPill) {
+      this.dom.brandPill.textContent = theme.brandPill;
+    }
     if (this.dom.themeBtn) {
       this.dom.themeBtn.innerHTML = theme.id === 'nusantara'
         ? `${ID_FLAG_SVG} <span>Nusantara</span>`
@@ -727,6 +729,59 @@ export class GameRenderer {
     for (const idxStr of Object.keys(state.slimeTraps)) {
       tileOverlay(Number(idxStr), 'SLIME TRAP — lawan yang melintas lengket & berhenti di sini!', 'slime', '#4ade80', 'circle');
     }
+
+    // Skill Targeting Board Tile Highlights (Red for Enemy targets, Hero Color for Own targets!)
+    if (state.phase === 'SKILL_SELECT_OWN' || state.phase === 'SKILL_SELECT_ENEMY') {
+      const activePlayer = state.players[state.turnOrderIdx];
+      const isEnemyPhase = state.phase === 'SKILL_SELECT_ENEMY';
+
+      // If in SKILL_SELECT_ENEMY, also mark the origin own pawn tile in cyan
+      if (isEnemyPhase && state.skillTempOwnPawnId && activePlayer) {
+        const ownPw = activePlayer.pawns.find((p) => p.id === state.skillTempOwnPawnId);
+        if (ownPw) {
+          const [or, oc] = getPawnGridPos(activePlayer.id, ownPw);
+          g.appendChild(svgEl('rect', {
+            x: oc * 100 + 6, y: or * 100 + 6, width: 88, height: 88, rx: 16,
+            fill: activePlayer.hero.color,
+            'fill-opacity': 0.2,
+            stroke: activePlayer.hero.color,
+            'stroke-width': 4,
+          }));
+        }
+      }
+
+      for (const pl of state.players) {
+        for (const pw of pl.pawns) {
+          if (!state.validPawnIds.includes(pw.id)) continue;
+          const [tr, tc] = getPawnGridPos(pl.id, pw);
+          const tx = tc * 100;
+          const ty = tr * 100;
+          const tColor = isEnemyPhase ? '#f1556f' : (activePlayer?.hero.color || '#2dd4bf');
+          const tg = svgEl('g', {
+            class: 'board-tile-group skill-target-tile',
+            'data-hint': isEnemyPhase
+              ? `TARGET LAWAN (${pl.hero.name}) — Klik pion di petak merah ini untuk tukar posisi!`
+              : `TARGET SKILL (${pl.hero.name}) — Klik pionmu di petak menyala ini!`,
+          });
+          tg.appendChild(svgEl('rect', {
+            x: tx + 4, y: ty + 4, width: 92, height: 92, rx: 16,
+            fill: tColor,
+            'fill-opacity': isEnemyPhase ? 0.32 : 0.24,
+            stroke: tColor,
+            'stroke-width': 5,
+            filter: 'url(#neonSoft)',
+          }));
+          tg.appendChild(svgEl('circle', {
+            cx: tx + 50, cy: ty + 50, r: 40,
+            fill: 'none',
+            stroke: '#ffffff',
+            'stroke-width': 2.2,
+            opacity: '0.75',
+          }));
+          g.appendChild(tg);
+        }
+      }
+    }
   }
 
   // --------------------------------------------------------------------------
@@ -779,8 +834,10 @@ export class GameRenderer {
           node.dataset.pawnId = pw.id;
           node.innerHTML = `
             <span class="pawn-shadow"></span>
+            <span class="pawn-dome"></span>
             <span class="pawn-ring"></span>
             <span class="pawn-core"></span>
+            <span class="pawn-dizzy" aria-hidden="true"><i>★</i><i>✦</i><i>★</i></span>
             <span class="pawn-badge"></span>
           `;
           node.addEventListener('click', () => {
@@ -820,9 +877,12 @@ export class GameRenderer {
 
         const isSelectable = validSet.has(pw.id);
         const isCurrentOwner = activePlayer?.id === pl.id;
+        const isBuffed = isCurrentOwner && (state.phaseDashActive || state.sparkySplitArmed) && pw.progress >= 0 && !pw.finished;
         node.classList.toggle('selectable', isSelectable);
         node.classList.toggle('is-ace', pw.isAce);
         node.classList.toggle('is-shielded', pw.shieldTurns > 0);
+        node.classList.toggle('is-dizzy', (pw.dizzyTurns || 0) > 0);
+        node.classList.toggle('is-buffed', isBuffed);
         node.classList.toggle('is-finished', pw.finished);
         node.classList.toggle('is-stacked', count > 1);
         node.classList.toggle('is-enemy-target', isSelectable && state.phase === 'SKILL_SELECT_ENEMY');
@@ -941,7 +1001,17 @@ export class GameRenderer {
     this.dom.rightCards.innerHTML = rightIds.map(buildCard).join('');
 
     document.querySelectorAll('[data-action="skill"]').forEach((btn) => {
-      btn.addEventListener('click', () => this.cb.onActivateSkill());
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.cb.onActivateSkill();
+      });
+    });
+
+    document.querySelectorAll('.hero-card[data-hero-id]').forEach((card) => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('[data-action="skill"]')) return;
+        this.cb.onHeroInspect?.(Number(card.dataset.heroId), card);
+      });
     });
 
     if (activePlayer) {
@@ -987,7 +1057,11 @@ export class GameRenderer {
     }
     this.dom.turnPrompt.textContent = prompt;
 
-    const inSkillSelect = isMyTurn && (state.phase === 'SKILL_SELECT_OWN' || state.phase === 'SKILL_SELECT_ENEMY');
+    const inSkillSelect = isMyTurn && (
+      state.phase === 'SKILL_SELECT_OWN' ||
+      state.phase === 'SKILL_SELECT_ENEMY' ||
+      (state.phase === 'WAITING_ROLL' && (state.sparkySplitArmed || state.phaseDashActive))
+    );
     this.dom.cancelSkillBtn.style.display = inSkillSelect ? 'inline-flex' : 'none';
 
     // Dice cube — skin-aware face inside the clickable roll pad
@@ -1041,8 +1115,30 @@ export class GameRenderer {
     }).join('');
 
     this.dom.diceLoadout.querySelectorAll('.dice-card').forEach((btn) => {
-      btn.addEventListener('click', () => this.cb.onSelectDice(btn.dataset.diceId));
+      const id = btn.dataset.diceId;
+      btn.addEventListener('click', () => {
+        this.cb.onDiceTip?.(id, true);
+        this.cb.onSelectDice(id);
+      });
+      btn.addEventListener('pointerenter', (e) => {
+        if (e.pointerType !== 'touch') this.cb.onDiceTip?.(id, false);
+      });
+      btn.addEventListener('pointerleave', (e) => {
+        if (e.pointerType !== 'touch') this.cb.onDiceTip?.(null, false);
+      });
     });
+
+    if (this.dom.dockPanel) {
+      this.dom.dockPanel.style.setProperty('--hero-color', player.hero.color);
+      this.dom.dockPanel.style.setProperty('--hero-glow', player.hero.glow);
+      this.dom.dockPanel.classList.toggle('is-my-turn', canRoll);
+      this.dom.dockPanel.classList.toggle('is-pawn-phase', isMyTurn && !canRoll);
+      this.dom.dockPanel.classList.toggle('is-opponent-turn', !isMyTurn);
+    }
+
+    if (this.dom.rollHint) {
+      this.dom.rollHint.style.display = canRoll && state.turnCount <= 3 ? '' : 'none';
+    }
 
     this.dom.rollBtn.disabled = !canRoll;
     this.dom.rollBtn.classList.toggle('ready', canRoll);

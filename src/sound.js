@@ -70,15 +70,35 @@ class SoundEngine {
     this._tone(680, 0.05, 'triangle', 0.1, 440);
   }
 
+  chargeTick(power01 = 0.5) {
+    const freq = 240 + Math.max(0, Math.min(1, power01)) * 520;
+    this._tone(freq, 0.04, 'triangle', 0.055, freq * 1.12);
+  }
+
   diceTick(pitch = 1) {
-    this._tone(280 * pitch + Math.random() * 140, 0.045, 'square', 0.06, 160);
+    // Tactile rattle clack + bright arcade tick
+    this._noise(0.028, 0.065);
+    this._tone(260 * pitch + Math.random() * 160, 0.045, 'square', 0.05, 150);
   }
 
   diceLand(isHigh = false) {
-    this._tone(isHigh ? 520 : 320, 0.11, 'triangle', 0.14, isHigh ? 880 : 210);
     if (isHigh) {
-      this._tone(780, 0.14, 'sine', 0.11, 1040, 0.06);
+      this.diceSix();
+      return;
     }
+    this._noise(0.03, 0.07);
+    this._tone(310, 0.1, 'triangle', 0.14, 195);
+  }
+
+  diceSix() {
+    // Bright celebratory 3-note neon jackpot fanfare for rolling 6 or 8!
+    this._tone(523.25, 0.09, 'triangle', 0.14, 659.25, 0);
+    this._tone(659.25, 0.1, 'triangle', 0.14, 783.99, 0.065);
+    this._tone(1046.5, 0.22, 'sine', 0.16, 1174.66, 0.13);
+  }
+
+  timerTick(urgent = false) {
+    this._tone(urgent ? 880 : 620, 0.055, 'sine', urgent ? 0.09 : 0.055, urgent ? 740 : 560);
   }
 
   hop(stepIndex = 0) {
